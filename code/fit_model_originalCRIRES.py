@@ -8,6 +8,7 @@ import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 
 #open data
+#change one line
 
 filename = '/Users/bbiller/Data/Doppler_imaging_code/fainterspectral-fits_6.pickle'
 f = open(filename, 'rb')
