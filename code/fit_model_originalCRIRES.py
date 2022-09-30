@@ -1,10 +1,8 @@
 import numpy as np
 from astropy.table import Table
 import modelfitting as mf
-import sys
 from scipy import signal
 import pickle
-import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 
 #open data
