@@ -10,25 +10,29 @@ import matplotlib.pyplot as plt
 #open data
 #change one line
 
-filename = '/Users/bbiller/Data/Doppler_imaging_code/fainterspectral-fits_6.pickle'
+filename = '../data/fainterspectral-fits_6.pickle'
 f = open(filename, 'rb')
 ret = pickle.load(f, encoding="latin1")
-
+# wobs: wavelength points of 4 group * 1024 points each
+# chipmods: 14 orders? * 4 * 1024
+# chiplams: 14 * 4 * 1024
+# obs0
+# obs1
+# chipcors
+# chipmodnobroad
 
 obs0 = np.median(ret['obs0'], axis=0)*14.
 eobs0 = np.median(ret['obs0'], axis=0)*np.sqrt(14.)
 fobs0 = np.vstack([signal.medfilt(obs0[jj], 3) for jj in range(4)])
-eobs0 /= np.median(fobs0, 1).reshape(4,1)
-fobs0 /= np.median(fobs0, 1).reshape(4,1)
+eobs0 = eobs0 / np.median(fobs0, 1).reshape(4,1)
+fobs0 = fobs0 / np.median(fobs0, 1).reshape(4,1)
 wfobs0 = 1./eobs0**2
 wind = np.isinf(wfobs0)
 wfobs0[wind] = 0.
 
 # open model
-#model = Table.read('/Users/bbiller/Documents/proposals/CRIRES_P108_ETC/models_1615994358/bt-settl/bt-settl-cifist/lte014.0-5.0-0.0a+0.0.BT-Settl.spec.7.dat.txt', format='ascii', names=('wl', 'flux'))
-#model['wl'] /= 10000.
 
-model = Table.read('/Users/bbiller/Data/Doppler_imaging_code/BT-Settl_lte015-5.0-0.0+0.0_orig.fits', format='fits')
+model = Table.read('../data/BT-Settl_lte015-5.0-0.0+0.0_orig.fits', format='fits')
 model['wl'] = model['Wavelength']
 model['flux'] = model['Flux']
 
@@ -40,10 +44,10 @@ chipmods = np.zeros((4, 1024), dtype=float)
 chiplams = np.zeros((4, 1024), dtype=float)
 chipmodnobroad = np.zeros((4, 1024), dtype=float)
   
-for jj in np.arange(4):
+for jj in np.arange(4): # 4 bands
     lolim = ret['wobs'][jj].min() - 0.003
     hilim = ret['wobs'][jj].max() + 0.003
-    tind = (model['wl']>lolim) * (model['wl'] < hilim)
+    tind = (model['wl']>lolim) * (model['wl'] < hilim) # get index of ..?
     lam_template = model['wl'][tind]
     template = model['flux'][tind]
     template /= np.median(template)
@@ -76,9 +80,7 @@ for jj in np.arange(4):
 #allmods.append(chipmods)
 #alllams.append(chiplams)
 
-fig = plt.figure()
-#fig = plt.figure()
-#ax = fig.add_subplot(111)
+fig = plt.figure(figsize=(15,11))
     
 for jj in np.arange(4):
     ax = fig.add_subplot(4,1,jj+1)
