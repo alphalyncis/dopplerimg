@@ -5,19 +5,11 @@ from scipy import signal
 import pickle
 import matplotlib.pyplot as plt
 
-#open data
-#change one line
+# open data
 
 filename = '../data/fainterspectral-fits_6.pickle'
 f = open(filename, 'rb')
 ret = pickle.load(f, encoding="latin1")
-# wobs: wavelength points of 4 group * 1024 points each
-# chipmods: 14 orders? * 4 * 1024
-# chiplams: 14 * 4 * 1024
-# obs0
-# obs1
-# chipcors
-# chipmodnobroad
 
 obs0 = np.median(ret['obs0'], axis=0)*14.
 eobs0 = np.median(ret['obs0'], axis=0)*np.sqrt(14.)
@@ -82,20 +74,12 @@ fig = plt.figure(figsize=(15,11))
     
 for jj in np.arange(4):
     ax = fig.add_subplot(4,1,jj+1)
+    ax.plot(ret['wobs'][jj, :], fobs0[jj, :], color='black', label="observation")
+    ax.plot(ret['wobs'][jj, :], chipmods[jj, :], color='red', label="best-fit")
+    ax.plot(ret['wobs'][jj, :], chipmodnobroad[jj, :], color='red', alpha=0.1, label="best-fit but no broaden")
+    ax.plot(ret['wobs'][jj, :], ret['chipmods'][0, jj, :], "--", color='green', linewidth=1.5, label="???")
 
-    ax.plot(ret['wobs'][jj, :], fobs0[jj, :], color='black')
-
-#    ax.plot(chiplams[jj, :], chipmods[jj, :], color='cyan')
-
-#    ax.plot(chiplams[jj, :], chipmodnobroad[jj, :], color='magenta')
-
-    ax.plot(ret['wobs'][jj, :], chipmods[jj, :], color='salmon')
-
-    ax.plot(ret['wobs'][jj, :], chipmodnobroad[jj, :], color='chartreuse')
-
-#    ax.plot(ret['wobs'][jj, :], ret['chipmodnobroad'][0, jj, :], color='blue')
-
-    ax.plot(ret['wobs'][jj, :], ret['chipmods'][0, jj, :], color='purple')
+plt.legend()
 
     
   
