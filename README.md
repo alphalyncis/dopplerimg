@@ -1,1 +1,1 @@
-# Doppler imaging of brown dwarf atmospheres
+# Doppler imaging of brown dwarf atmospheric clouds
