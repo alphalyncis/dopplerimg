@@ -34,10 +34,10 @@ chipmods = np.zeros((4, 1024), dtype=float)
 chiplams = np.zeros((4, 1024), dtype=float)
 chipmodnobroad = np.zeros((4, 1024), dtype=float)
   
-for jj in np.arange(4): # 4 bands
+for jj in np.arange(4): # TODO: separate fit for each spectra, but physically some parameter should be same among spectra?
     lolim = ret['wobs'][jj].min() - 0.003  #TODO: where this value from
     hilim = ret['wobs'][jj].max() + 0.003
-    tind = (model['wl']>lolim) * (model['wl'] < hilim) # get index of ..?
+    tind = (model['wl']>lolim) * (model['wl'] < hilim)
     lam_template = model['wl'][tind]
     template = model['flux'][tind]
     template /= np.median(template)
@@ -51,7 +51,7 @@ for jj in np.arange(4): # 4 bands
     guess = np.concatenate(([21, 0.3, 9e-5], wcoef, ccoef))
     #mygmod, mygw = fit_atmo.modelspec_tel_template(guess, lam_template, template, lam_atmo, atmo, NPW, NPC, npix, retlam=True)
 
-    thingy = mf.modelspec_template(guess, lam_template, template, NPW, NPC, npix)
+    #thingy = mf.modelspec_template(guess, lam_template, template, NPW, NPC, npix)
     #sys.exit()
     fitargs = (mf.modelspec_template, lam_template, template, NPW, NPC, npix, fobs0[jj], wfobs0[jj])
     fit = mf.fmin(mf.errfunc, guess, args=fitargs, full_output=True, disp=True, maxiter=10000, maxfun=10000)

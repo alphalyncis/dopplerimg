@@ -600,6 +600,8 @@ def modelspec_template(params, lam_template, template, NPW, NPC, npix, retlam=Fa
        """
     # 2013-05-08 07:38 IJMC: Created
     # 2013-08-06 10:28 IJMC: Updated to use vsini and LLD
+    # TODO: example says fit_atmo.modelspec_tel_template?
+    
     import pdb
 
     vsini = params[0]
@@ -788,7 +790,6 @@ def modelspec_tel_template(params, lam_template, template, lam_atmo, atmo, NPW, 
     # 2013-05-08 07:38 IJMC: Created
     # 2013-08-06 10:28 IJMC: Updated to use vsini and LLD
     import pdb
-    import analysis3 as an
     #import spec
 
     vsini = params[0]
@@ -819,7 +820,7 @@ def modelspec_tel_template(params, lam_template, template, lam_atmo, atmo, NPW, 
     pix = np.arange(npix, dtype=float)/npix
 
     # Create model-convolution Kernel and convolve template:
-    pixsize_ms = np.diff(lam_template).mean()/lam_template.mean() * an.c
+    pixsize_ms = np.diff(lam_template).mean()/lam_template.mean() * const.c
     xkern = np.arange(-int(1200.*vsini/pixsize_ms), int(1200.*vsini/pixsize_ms)+1)
 
     # adjust to prevent nkern from going to 0
