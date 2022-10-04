@@ -12,7 +12,7 @@ f = open(filename, 'rb')
 ret = pickle.load(f, encoding="latin1")
 
 obs0 = np.median(ret['obs0'], axis=0)*14.
-eobs0 = np.median(ret['obs0'], axis=0)*np.sqrt(14.)
+eobs0 = np.median(ret['obs0'], axis=0)*np.sqrt(14.) #TODO: why is obs0 not sqrted
 fobs0 = np.vstack([signal.medfilt(obs0[jj], 3) for jj in range(4)])
 eobs0 = eobs0 / np.median(fobs0, 1).reshape(4,1)
 fobs0 = fobs0 / np.median(fobs0, 1).reshape(4,1)
@@ -35,7 +35,7 @@ chiplams = np.zeros((4, 1024), dtype=float)
 chipmodnobroad = np.zeros((4, 1024), dtype=float)
   
 for jj in np.arange(4): # 4 bands
-    lolim = ret['wobs'][jj].min() - 0.003
+    lolim = ret['wobs'][jj].min() - 0.003  #TODO: where this value from
     hilim = ret['wobs'][jj].max() + 0.003
     tind = (model['wl']>lolim) * (model['wl'] < hilim) # get index of ..?
     lam_template = model['wl'][tind]
@@ -77,7 +77,7 @@ for jj in np.arange(4):
     ax.plot(ret['wobs'][jj, :], fobs0[jj, :], color='black', label="observation")
     ax.plot(ret['wobs'][jj, :], chipmods[jj, :], color='red', label="best-fit")
     ax.plot(ret['wobs'][jj, :], chipmodnobroad[jj, :], color='red', alpha=0.1, label="best-fit but no broaden")
-    ax.plot(ret['wobs'][jj, :], ret['chipmods'][0, jj, :], "--", color='green', linewidth=1.5, label="???")
+    ax.plot(ret['wobs'][jj, :], ret['chipmods'][0, jj, :], color='green', alpha=0.4, linewidth=1.5, label="???")
 
 plt.legend()
 
