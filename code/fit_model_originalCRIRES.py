@@ -43,12 +43,12 @@ for jj in np.arange(4): # TODO: separate fit for each spectra, but physically so
     template /= np.median(template)
 
     wcoef = np.polyfit(pix, ret['wobs'][jj], NPW-1)
-    ccoef = [-0.1, 1.2/np.median(template)]
+    ccoef = [-0.1, 1.2/np.median(template)] # TODO: where values from
     NPC = len(ccoef)
-    ind90 = np.sort(fobs0[jj])[int(0.9*npix)]  
+    ind90 = np.sort(fobs0[jj])[int(0.9*npix)]
     ccoef = np.polyfit(pix[fobs0[jj]>ind90], fobs0[jj][fobs0[jj]>ind90], NPC-1)
 
-    guess = np.concatenate(([21, 0.3, 9e-5], wcoef, ccoef))
+    guess = np.concatenate(([21, 0.3, 9e-5], wcoef, ccoef)) # TODO: where values from
     #mygmod, mygw = fit_atmo.modelspec_tel_template(guess, lam_template, template, lam_atmo, atmo, NPW, NPC, npix, retlam=True)
 
     #thingy = mf.modelspec_template(guess, lam_template, template, NPW, NPC, npix)
