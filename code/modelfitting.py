@@ -1,5 +1,9 @@
+"""
+This module contains functions for fitting a model spectrum with data using downhill simplex method.
+"""
+
 import numpy as np
-from numpy import ones, std, sum, mean, median, array, linalg, tile, concatenate, floor, Inf, arange, meshgrid, zeros, sin, cos, tan, arctan, sqrt, exp, nan, max
+from numpy import sum, array, sqrt, exp, max
 import pdb
 
 from numpy import where as find
@@ -715,7 +719,7 @@ def rotationalProfile(delta_epsilon, delta_lam):
 def modelspec_tel_template(params, lam_template, template, lam_atmo, atmo, NPW, NPC, npix, retlam=False):
     """
     Return the rotationally-broadened, rv-shifited, telluric-corrected model spectrum.
-    
+
      :INPUTS:
        params:      
 
