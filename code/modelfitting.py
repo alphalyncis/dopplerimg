@@ -541,7 +541,9 @@ def fmin(func, x0, args=(), kw=dict(),  xtol=1e-4, ftol=1e-4, maxiter=None, maxf
     return retlist
 
 def modelspec_template(params, lam_template, template, NPW, NPC, npix, retlam=False):
-    """    
+    """
+    Return the rotationally-broadened, rv-shifited model spectrum.
+
      :INPUTS:
        params:      
 
@@ -711,7 +713,9 @@ def rotationalProfile(delta_epsilon, delta_lam):
 
 
 def modelspec_tel_template(params, lam_template, template, lam_atmo, atmo, NPW, NPC, npix, retlam=False):
-    """    
+    """
+    Return the rotationally-broadened, rv-shifited, telluric-corrected model spectrum.
+    
      :INPUTS:
        params:      
 
