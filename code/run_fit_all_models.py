@@ -1,3 +1,4 @@
+from logging.config import _RootLoggerConfiguration
 from operator import mod
 import re
 import numpy as np
@@ -38,37 +39,44 @@ class FittingTask():
         self.func_wavelen = None
         self.continu_coeffs = None
         self.func_continu = None
+        self.comment = None
 
-    def from_archive(self, datafile, plot=False):
+    @classmethod
+    def from_archive(cls, datafile):
         """Creates a fitting task from archive pickle data"""
 
-        with open(datafile, 'rb') as f:
-            self.data = pickle.load(f, encoding='latin1')
+        fitTask = cls()
+        fitTask.comment = f"Fitting data set {datafile}."
 
-        self.lam_obs = self.data['wobs']
+        with open(datafile, 'rb') as f:
+            fitTask.data = pickle.load(f, encoding='latin1')
+
+        fitTask.lam_obs = fitTask.data['wobs']
 
         # get time-integrated filtered data
-        avg_obs = np.median(self.data['obs0'], axis=0)*14.
-        self.f_obs = np.vstack([signal.medfilt(avg_obs[band], 3) for band in range(4)])
+        avg_obs = np.median(fitTask.data['obs0'], axis=0)*14.
+        fitTask.f_obs = np.vstack([signal.medfilt(avg_obs[band], 3) for band in range(4)])
         
         # get data for individual timeframes, TODO: try if fits better
-        self.f_obs_times = self.data['obs0']
+        fitTask.f_obs_times = fitTask.data['obs0']
 
         # get errors of data, TODO: try other error definitions
-        self.error_obs = np.median(self.data['obs0'], axis=0)*np.sqrt(14.) 
-        self.error_obs /= np.median(self.f_obs, axis=1).reshape(4,1)
+        fitTask.error_obs = np.median(fitTask.data['obs0'], axis=0)*np.sqrt(14.) 
+        fitTask.error_obs /= np.median(fitTask.f_obs, axis=1).reshape(4,1)
 
         # normalize
-        self.f_obs /= np.median(self.f_obs, axis=1).reshape(4,1)
+        fitTask.f_obs /= np.median(fitTask.f_obs, axis=1).reshape(4,1)
 
         # obtain weights for chi^2 minimization
-        self.weight_obs = 1./self.error_obs**2
-        wind = np.isinf(self.weight_obs)
-        self.weight_obs[wind] = 0.
+        fitTask.weight_obs = 1./fitTask.error_obs**2
+        wind = np.isinf(fitTask.weight_obs)
+        fitTask.weight_obs[wind] = 0.
         
-        self.npix = self.lam_obs.shape(1)
-        self.pix = np.arange(self.npix, dtype=float) / self.npix
-    
+        fitTask.npix = fitTask.lam_obs.shape[1]
+        fitTask.pix = np.arange(fitTask.npix, dtype=float) / fitTask.npix
+        return fitTask
+
+
     def plot_obs(self, time_averaged=True):
         if time_averaged:
             fig = plt.figure(figsize=(12,12))
@@ -82,7 +90,6 @@ class FittingTask():
                     plt.legend(loc=1)
         else:
             raise NotImplementedError("not yet") # TODO: add individual times plotting
-        return
 
     def load_model(self, modelfile, band=0, plot=False):
         model = Table.read(modelfile, format='fits')
@@ -100,14 +107,13 @@ class FittingTask():
             fig = plt.figure(figsize=(12,3))
             plt.plot(self.lam_template, self.f_template, label='template spectra')
             plt.legend(loc=1)
-        return
 
     def fit_wavelength_coeffs(self, band=0, plot=False):
         """
         Return coefficients for polynomial of order NPW that convert pixel
         number to wavelength.
         """
-        wcoef = np.polyfit(self.pix, self.lam_obs[band], self.NUM_WAVELENTH_COEFFS-1)
+        wcoef = np.polyfit(self.pix, self.lam_obs[band], self.NUM_WAVELEN_COEFFS-1)
         self.func_wavelen = np.poly1d(wcoef)
 
         if plot:
@@ -124,7 +130,6 @@ class FittingTask():
                 f"+{wcoef[2]:.2e}x+{wcoef[3]:.2e}"))
             plt.legend()
         self.wavelen_coeffs = wcoef
-        return
 
     def fit_continuum_coeffs(self, band=0, plot=False):
         self.continu_coeffs = [-0.1, 1.2/np.median(self.lam_template)]   
@@ -134,7 +139,8 @@ class FittingTask():
         pix = np.arange(npix, dtype=float)/npix
         
         ind90 = np.sort(self.f_obs[band])[int(0.9*npix)]  # fit top 10% (i.e. unobsorbed)
-        ccoef = np.polyfit(pix[self.f_obs[band]>ind90], self.f_obs[band][self.f_obs[band]>ind90], NPC-1)
+        ccoef = np.polyfit(pix[self.f_obs[band]>ind90], self.f_obs[band][self.f_obs[band]>ind90], 
+            self.NUM_CONTINU_COEFFS-1)
         self.func_continu = np.poly1d(ccoef)
 
         if plot:
@@ -146,7 +152,6 @@ class FittingTask():
             plt.text(0.6, 1.3, f"f(x)={ccoef[0]:.4f}x+{ccoef[1]:.4f}", color="tab:green")
             plt.legend()
             plt.show()
-        return ccoef
 
     def chi_square_fit(self, band=0):
         parametric_spectrum_func = mf.modelspec_template
@@ -168,14 +173,27 @@ class FittingTask():
         self.bestfit_params = self.fit[0]
         print("Best-fit parameters:", self.bestfit_params)
 
-def get_nobroad_spectrum():
-    return
+    def get_nobroad_spectrum(self):
+        return
+
+    def fit_one_band():
+        return
+    
+    def fit_four_bands():
+        return
+
+    def fit_all_models():
+        return
 
 
 if __name__ == "__main__":
     fitTask = FittingTask.from_archive(datafile="../data/fainterspectral-fits_6.pickle")
     fitTask.plot_obs()
-    
+    fitTask.load_model(modelfile="../data/BT-Settl_lte015-5.0-0.0+0.0_orig.fits")
+    fitTask.fit_wavelength_coeffs()
+    fitTask.fit_continuum_coeffs()
+    fitTask.chi_square_fit()
+
     # for band in range(4):
     #     lam_model, f_model = load_model(modelfile, plot=True)
 
