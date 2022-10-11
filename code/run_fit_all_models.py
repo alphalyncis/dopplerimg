@@ -117,7 +117,7 @@ class FittingTask():
             fig = plt.figure(figsize=(12,3))
             plt.plot(self.lam_template, self.f_template, label='template spectra')
             plt.legend(loc=1)
-        return model
+        return self.lam_template, self.f_template
 
     def load_telluric(self,  band, telluricfile, plot=False):
         """Read the telluric spectrum and cutout a section covering the required band."""
@@ -323,25 +323,30 @@ class FittingTask():
             result[modelname] = res
         return result
 
-def compare_all_models(result):
+def print_all_results(result):
     for key, item in result.items():
         for j in range(4):
             print(f"model:{key}  band:{j}  fmin:{item['fit'][j][1]}")
 
+def find_avg_bestfit_model(result):
+    pass
 
 
 if __name__ == "__main__":
-    print(f"cwd: {os.getcwd()}")
-    datafile = "/Users/xqchen/workspace/dopplerimg/data/fainterspectral-fits_6.pickle"
-    modelfile = "/Users/xqchen/workspace/dopplerimg/data/BT-Settl_lte015-5.0-0.0+0.0_orig.fits"
-    models_dir = "/Users/xqchen/workspace/dopplerimg/data/BT-SettlModels"
-    telluricfile = "/Users/xqchen/workspace/dopplerimg/data/transdata_0,5-14_mic_hires.fits"
-    ft = FittingTask.from_archive(datafile)
+    data_dir = "/Users/xqchen/workspace/dopplerimg/data/"
+    datafile = "fainterspectral-fits_6.pickle"
+    modelfile_ian_orig = "BT-Settl_lte015-5.0-0.0+0.0_orig.fits"
+    modelfile_015 = "BT-SettlModels/lte016-5.5-0.0.BT-Settl.7.dat_ironly.fits"
+    modelfile_016 = "BT-SettlModels/lte016-5.5-0.0.BT-Settl.7.dat_ironly.fits"
+    models_dir = "BT-SettlModels"
+    telluricfile = "transdata_0,5-14_mic_hires.fits"
+    ft = FittingTask.from_archive(data_dir+datafile)
     # fitTask.plot_obs()
     # res1 = ft.fit_one_band(band=0, modelfile=modelfile, include_telluric=True, telluricfile=telluricfile)
-    # res4 = fitTask.fit_four_bands(modelfile, include_telluric=True, telluricfile=telluricfile)
+    # res4 = ft.fit_four_bands(modelfile, include_telluric=True, telluricfile=telluricfile)
     
-    resall = ft.fit_many_models(models_dir, include_telluric=True, telluricfile=telluricfile)
+    resall = ft.fit_many_models(data_dir+models_dir, 
+        include_telluric=True, telluricfile=data_dir+telluricfile)
 
     # for band in range(4):
     #     lam_model, f_model = load_model(modelfile, plot=True)
