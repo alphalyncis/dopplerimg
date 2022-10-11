@@ -6,6 +6,7 @@ import pickle
 import matplotlib.pyplot as plt
 from astropy.io import fits
 import glob
+import os
 
 datafile = "../data/fainterspectral-fits_6.pickle"
 modelfile = "../data/BT-Settl_lte015-5.0-0.0+0.0_orig.fits"
@@ -24,6 +25,7 @@ class FittingTask():
         self.NUM_WAVELEN_COEFFS = 4
         self.NUM_CONTINU_COEFFS = 2
         self.INIT_PARAMS = [21, 0.3, 9e-5]
+        self.INIT_PARAMS_TEL = [21, 0.3, 9e-5, 42, 1.3]
         self.lam_obs = None
         self.f_obs = None
         self.error_obs = None
@@ -92,21 +94,30 @@ class FittingTask():
             raise NotImplementedError("not yet") # TODO: add individual times plotting
 
     def load_model(self, band, modelfile, plot=False):
-        model = Table.read(modelfile, format='fits')
-        model['wl'] = model['Wavelength']
-        model['flux'] = model['Flux']
+        model = fits.getdata(modelfile)
+        model = np.array(model.tolist())
+
+        if model[:,0].min() > 1000: # if unit in angstrom
+            model[:,0] /= 10000
 
         lowerlim = self.lam_obs[band].min() - 0.003
         upperlim = self.lam_obs[band].max() + 0.003
-        tind = (model['wl'] > lowerlim) * (model['wl'] < upperlim)
-        self.lam_template = model['wl'][tind]
-        self.f_template = model['flux'][tind]
+        tind = (model[:,0]>lowerlim) * (model[:,0] < upperlim)
+        self.lam_template = model[tind, 0]
+        self.f_template = model[tind, 1]
         self.f_template /= np.median(self.f_template) # normalize
+        
+        # to be compatible with rotational profile convolution kernel
+        if len(self.lam_template) < 400:
+           new_lam = np.linspace(self.lam_template[0], self.lam_template[-1], 400)
+           self.f_template = np.interp(new_lam, self.lam_template, self.f_template)
+           self.lam_template = new_lam
 
         if plot:
             fig = plt.figure(figsize=(12,3))
             plt.plot(self.lam_template, self.f_template, label='template spectra')
             plt.legend(loc=1)
+        return model
 
     def load_telluric(self,  band, telluricfile, plot=False):
         """Read the telluric spectrum and cutout a section covering the required band."""
@@ -186,6 +197,7 @@ class FittingTask():
                 self.NUM_WAVELEN_COEFFS, self.NUM_CONTINU_COEFFS, self.npix, 
                 self.f_obs[band], self.weight_obs[band]
             )
+            guess = np.concatenate((self.INIT_PARAMS_TEL, self.wavelen_coeffs, self.continu_coeffs))
         else:
             parametric_spectrum_func = mf.modelspec_template
             errfunc_args = (
@@ -194,9 +206,10 @@ class FittingTask():
                 self.NUM_WAVELEN_COEFFS, self.NUM_CONTINU_COEFFS, self.npix, 
                 self.f_obs[band], self.weight_obs[band]
             )
+            guess = np.concatenate((self.INIT_PARAMS, self.wavelen_coeffs, self.continu_coeffs))
         result = mf.fmin(
             func=mf.errfunc, 
-            x0=np.concatenate((self.INIT_PARAMS, self.wavelen_coeffs, self.continu_coeffs)), 
+            x0=guess,
             args=errfunc_args, 
             full_output=True, 
             disp=True, 
@@ -208,12 +221,32 @@ class FittingTask():
     def get_nobroad_spectrum(self):
         return
 
-    def fit_one_band(self, band, modelfile, include_telluric=False, telluricfile=None):
+    def fit_one_band(self, band, modelfile, include_telluric=False, telluricfile=None, plot=True):
         self.load_model(band=band, modelfile=modelfile)
         self.fit_wavelength_coeffs(band=band)
         self.fit_continuum_coeffs(band=band)
         fit = self.chi_square_fit(band=band, include_telluric=include_telluric, telluricfile=telluricfile)
-        return fit
+        if include_telluric:
+            spec, lam = mf.modelspec_tel_template(
+                fit[0], 
+                self.lam_template, self.f_template, 
+                self.lam_atmo, self.f_atmo,
+                self.NUM_WAVELEN_COEFFS, self.NUM_CONTINU_COEFFS, 
+                self.npix, retlam=True
+            )
+        else:
+            spec, lam = mf.modelspec_template(
+                fit[0], 
+                self.lam_template, self.f_template, 
+                self.NUM_WAVELEN_COEFFS, self.NUM_CONTINU_COEFFS, 
+                self.npix, retlam=True
+            )
+        if plot:
+            plt.figure(figsize=(15,4))
+            plt.plot(self.lam_obs[band, :], self.f_obs[band, :], color='black', label="observed spectrum")
+            plt.plot(self.lam_obs[band, :], spec, color='red', label="best-fit spectrum")
+            plt.legend()
+        return {"spec": [spec], "lam": [lam], "fit": [fit]}
     
     def fit_four_bands(self, modelfile, include_telluric=False, telluricfile=None, plot=True):
         res = {"spec": [], "lam": [], "fit":[]}
@@ -256,21 +289,59 @@ class FittingTask():
             plt.legend()
         return res
 
-    def fit_many_models(self, models_dir):
+    def fit_many_models(self, models_dir, include_telluric=False, telluricfile=None):
+        result = {}
+        for modelfile in glob.glob(f"{models_dir}/*[0-9]*.*"):
+            modelname = modelfile.split("/")[-1]
+            print(f"fitting model {modelname}...")
 
-        return
+            res = {"spec": [], "lam": [], "fit":[]}
+            for j in range(4):
+                self.load_model(band=j, modelfile=modelfile)
+                self.fit_wavelength_coeffs(band=j)
+                self.fit_continuum_coeffs(band=j)
+                fit = self.chi_square_fit(band=j, include_telluric=include_telluric, telluricfile=telluricfile)
+                if include_telluric:
+                    spec, lam = mf.modelspec_tel_template(
+                        fit[0], 
+                        self.lam_template, self.f_template, 
+                        self.lam_atmo, self.f_atmo,
+                        self.NUM_WAVELEN_COEFFS, self.NUM_CONTINU_COEFFS, 
+                        self.npix, retlam=True
+                    )
+                else:
+                    spec, lam = mf.modelspec_template(
+                        fit[0], 
+                        self.lam_template, self.f_template, 
+                        self.NUM_WAVELEN_COEFFS, self.NUM_CONTINU_COEFFS, 
+                        self.npix, retlam=True
+                    )
+                res['spec'].append(spec)
+                res['lam'].append(lam)
+                res['fit'].append(fit)
+
+            result[modelname] = res
+        return result
+
+def compare_all_models(result):
+    for key, item in result.items():
+        for j in range(4):
+            print(f"model:{key}  band:{j}  fmin:{item['fit'][j][1]}")
+
 
 
 if __name__ == "__main__":
-    datafile = "../data/fainterspectral-fits_6.pickle"
-    modelfile = "../data/BT-Settl_lte015-5.0-0.0+0.0_orig.fits"
-    models_dir = "../data/BT-SettlModels"
-    telluricfile = "../data/transdata_0,5-14_mic_hires.fits"
-    fitTask = FittingTask.from_archive(datafile)
+    print(f"cwd: {os.getcwd()}")
+    datafile = "/Users/xqchen/workspace/dopplerimg/data/fainterspectral-fits_6.pickle"
+    modelfile = "/Users/xqchen/workspace/dopplerimg/data/BT-Settl_lte015-5.0-0.0+0.0_orig.fits"
+    models_dir = "/Users/xqchen/workspace/dopplerimg/data/BT-SettlModels"
+    telluricfile = "/Users/xqchen/workspace/dopplerimg/data/transdata_0,5-14_mic_hires.fits"
+    ft = FittingTask.from_archive(datafile)
     # fitTask.plot_obs()
-    res1 = fitTask.fit_one_band(band=0, modelfile=modelfile, include_telluric=True, telluricfile=telluricfile)
-    res4 = fitTask.fit_four_bands(modelfile, include_telluric=True, telluricfile=telluricfile)
-
+    # res1 = ft.fit_one_band(band=0, modelfile=modelfile, include_telluric=True, telluricfile=telluricfile)
+    # res4 = fitTask.fit_four_bands(modelfile, include_telluric=True, telluricfile=telluricfile)
+    
+    resall = ft.fit_many_models(models_dir, include_telluric=True, telluricfile=telluricfile)
 
     # for band in range(4):
     #     lam_model, f_model = load_model(modelfile, plot=True)
