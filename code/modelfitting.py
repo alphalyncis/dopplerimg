@@ -832,7 +832,7 @@ def modelspec_tel_template(params, lam_template, template, lam_atmo, atmo, NPW, 
     xkern = np.arange(-int(1200.*vsini/pixsize_ms), int(1200.*vsini/pixsize_ms)+1)
 
     # adjust to prevent nkern from going to 0
-    xkern = np.arange(-200, 200)
+    xkern = np.arange(-200, 200) # TODO: the size of gaussian kernel?
     
 #    if xkern.size>=template.size:
 #        xkern = np.arange(-template.size/2, template.size/2)
@@ -845,7 +845,7 @@ def modelspec_tel_template(params, lam_template, template, lam_atmo, atmo, NPW, 
     rotational_profile /= rotational_profile.sum()
         #kern = gaussian([1., fwhm/2.3548, 0, 0], xkern)
         #kern /= kern.sum()
-
+    
     new_template = np.convolve(template, rotational_profile, 'same')
 
     # Create telluric-convolution Kernel and convolve scaled telluric spectrum:
