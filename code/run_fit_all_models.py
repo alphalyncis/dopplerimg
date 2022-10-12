@@ -323,10 +323,24 @@ class FittingTask():
             result[modelname] = res
         return result
 
-def print_all_results(result):
+    def plot_one_result(self, result):
+        fig = plt.figure(figsize=(15,11))         
+        for j in np.arange(4):
+            ax = fig.add_subplot(4,1,j+1)
+            ax.plot(self.lam_obs[j, :], self.f_obs[j, :], color='black', label="observation")
+            ax.plot(self.lam_obs[j, :], result['spec'][j], color='red', label="best-fit (with telluric)")
+            ax.plot(self.lam_obs[j, :], self.data['chipmods'][0, j, :], color='green', 
+                alpha=0.4, linewidth=1.5, label="original best fit from pickle")
+        plt.legend()
+
+
+def print_all_results(result, avg_bands=True):
     for key, item in result.items():
-        for j in range(4):
-            print(f"model:{key}  band:{j}  fmin:{item['fit'][j][1]}")
+        if avg_bands:
+            print(f"model:{key} fmin:{np.array([item['fit'][j][1] for j in range(4)]).mean()}")
+        else:
+            print(f"model:{key} fmin:{[item['fit'][j][1] for j in range(4)]}")
+
 
 def find_avg_bestfit_model(result):
     pass
@@ -336,9 +350,10 @@ if __name__ == "__main__":
     data_dir = "/Users/xqchen/workspace/dopplerimg/data/"
     datafile = "fainterspectral-fits_6.pickle"
     modelfile_ian_orig = "BT-Settl_lte015-5.0-0.0+0.0_orig.fits"
-    modelfile_015 = "BT-SettlModels/lte016-5.5-0.0.BT-Settl.7.dat_ironly.fits"
+    modelfile_015 = "BT-SettlModels/lte015-5.0-0.0.BT-Settl.7.dat_ironly.fits"
     modelfile_016 = "BT-SettlModels/lte016-5.5-0.0.BT-Settl.7.dat_ironly.fits"
-    models_dir = "BT-SettlModels"
+    #models_dir = "BT-SettlModels"
+    models_dir = "CallieModels"
     telluricfile = "transdata_0,5-14_mic_hires.fits"
     ft = FittingTask.from_archive(data_dir+datafile)
     # fitTask.plot_obs()
