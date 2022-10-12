@@ -8,15 +8,6 @@ from astropy.io import fits
 import glob
 import os
 
-datafile = "../data/fainterspectral-fits_6.pickle"
-modelfile = "../data/BT-Settl_lte015-5.0-0.0+0.0_orig.fits"
-telluricfile = ""
-
-include_telluric = False
-fit_time_averaged = True
-NUM_WAVELEN_COEFFS = 4
-NUM_CONTINU_COEFFS = 2
-
 class FittingTask():
     def __init__(self) -> None:
         self.data = None
@@ -323,15 +314,16 @@ class FittingTask():
             result[modelname] = res
         return result
 
-    def plot_one_result(self, result):
-        fig = plt.figure(figsize=(15,11))         
-        for j in np.arange(4):
-            ax = fig.add_subplot(4,1,j+1)
-            ax.plot(self.lam_obs[j, :], self.f_obs[j, :], color='black', label="observation")
-            ax.plot(self.lam_obs[j, :], result['spec'][j], color='red', label="best-fit (with telluric)")
-            ax.plot(self.lam_obs[j, :], self.data['chipmods'][0, j, :], color='green', 
-                alpha=0.4, linewidth=1.5, label="original best fit from pickle")
-        plt.legend()
+
+def plot_one_result(ft, result):
+    fig = plt.figure(figsize=(15,11))         
+    for j in np.arange(4):
+        ax = fig.add_subplot(4,1,j+1)
+        ax.plot(ft.lam_obs[j, :], ft.f_obs[j, :], color='black', label="observation")
+        ax.plot(ft.lam_obs[j, :], result['spec'][j], color='red', label="best-fit (with telluric)")
+        ax.plot(ft.lam_obs[j, :], ft.data['chipmods'][0, j, :], color='green', 
+            alpha=0.4, linewidth=1.5, label="original best fit from pickle")
+    plt.legend()
 
 
 def print_all_results(result, avg_bands=True):
@@ -341,9 +333,6 @@ def print_all_results(result, avg_bands=True):
         else:
             print(f"model:{key} fmin:{[item['fit'][j][1] for j in range(4)]}")
 
-
-def find_avg_bestfit_model(result):
-    pass
 
 
 if __name__ == "__main__":
