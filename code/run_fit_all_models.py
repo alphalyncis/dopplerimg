@@ -85,8 +85,13 @@ class FittingTask():
             raise NotImplementedError("not yet") # TODO: add individual times plotting
 
     def load_model(self, band, modelfile, plot=False):
-        model = fits.getdata(modelfile)
-        model = np.array(model.tolist())
+        if modelfile.split(".")[-1] == "fits":
+            model = fits.getdata(modelfile)
+            model = np.array(model.tolist())
+
+        else:
+            raise NotImplementedError("can only read fits file.")
+            # TODO: read ascii format files
 
         if model[:,0].min() > 1000: # if unit in angstrom
             model[:,0] /= 10000
@@ -336,21 +341,20 @@ def print_all_results(result, avg_bands=True):
 
 
 if __name__ == "__main__":
-    data_dir = "/Users/xqchen/workspace/dopplerimg/data/"
-    datafile = "fainterspectral-fits_6.pickle"
+    data_dir = "/~/workspace/dopplerimg/data/"
+    datafile = "CRIRES/fainterspectral-fits_6.pickle"
     modelfile_ian_orig = "BT-Settl_lte015-5.0-0.0+0.0_orig.fits"
     modelfile_015 = "BT-SettlModels/lte015-5.0-0.0.BT-Settl.7.dat_ironly.fits"
     modelfile_016 = "BT-SettlModels/lte016-5.5-0.0.BT-Settl.7.dat_ironly.fits"
-    #models_dir = "BT-SettlModels"
-    models_dir = "CallieModels"
+    models_dir = "BT-SettlModels"
+    #models_dir = "CallieModels"
     telluricfile = "transdata_0,5-14_mic_hires.fits"
     ft = FittingTask.from_archive(data_dir+datafile)
     # fitTask.plot_obs()
     # res1 = ft.fit_one_band(band=0, modelfile=modelfile, include_telluric=True, telluricfile=telluricfile)
-    # res4 = ft.fit_four_bands(modelfile, include_telluric=True, telluricfile=telluricfile)
+    res4 = ft.fit_four_bands(data_dir+models_dir+modelfile_ian_orig, include_telluric=True, telluricfile=telluricfile)
     
-    resall = ft.fit_many_models(data_dir+models_dir, 
-        include_telluric=True, telluricfile=data_dir+telluricfile)
+    #resall = ft.fit_many_models(data_dir+models_dir, include_telluric=True, telluricfile=data_dir+telluricfile)
 
     # for band in range(4):
     #     lam_model, f_model = load_model(modelfile, plot=True)
