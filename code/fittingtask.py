@@ -116,7 +116,10 @@ class FittingTask():
         return self.lam_template, self.f_template
 
     def load_telluric(self,  band, telluricfile, plot=False):
-        """Read the telluric spectrum and cutout a section covering the required band."""
+        """
+        Read the (already normalized) telluric spectrum and cutout a segment 
+        covering the required band.
+        """
 
         atm0 = fits.getdata(telluricfile)
 
@@ -341,20 +344,23 @@ def print_all_results(result, avg_bands=True):
 
 
 if __name__ == "__main__":
-    data_dir = "/~/workspace/dopplerimg/data/"
+    homedir = os.path.expanduser('~')
+    data_dir = f"{homedir}/uoedrive/data/"
+    #data_dir = "/~/workspace/dopplerimg/data/"
     datafile = "CRIRES/fainterspectral-fits_6.pickle"
     modelfile_ian_orig = "BT-Settl_lte015-5.0-0.0+0.0_orig.fits"
-    modelfile_015 = "BT-SettlModels/lte015-5.0-0.0.BT-Settl.7.dat_ironly.fits"
-    modelfile_016 = "BT-SettlModels/lte016-5.5-0.0.BT-Settl.7.dat_ironly.fits"
-    models_dir = "BT-SettlModels"
-    #models_dir = "CallieModels"
-    telluricfile = "transdata_0,5-14_mic_hires.fits"
+    #models_dir = "BT-SettlModels/015-5.0s/bestfits"
+    models_dir = "CallieModels"
+    telluricfile = "telluric/transdata_0,5-14_mic_hires.fits"
     ft = FittingTask.from_archive(data_dir+datafile)
     # fitTask.plot_obs()
     # res1 = ft.fit_one_band(band=0, modelfile=modelfile, include_telluric=True, telluricfile=telluricfile)
-    res4 = ft.fit_four_bands(data_dir+models_dir+modelfile_ian_orig, include_telluric=True, telluricfile=telluricfile)
+    res4 = ft.fit_four_bands(
+        modelfile=data_dir+"CallieModels/t1500g1000nc_m0.0_co1.0.fits", 
+        include_telluric=True, 
+        telluricfile=data_dir+telluricfile)
     
-    #resall = ft.fit_many_models(data_dir+models_dir, include_telluric=True, telluricfile=data_dir+telluricfile)
+    # resall = ft.fit_many_models(data_dir+models_dir, include_telluric=True, telluricfile=data_dir+telluricfile)
 
     # for band in range(4):
     #     lam_model, f_model = load_model(modelfile, plot=True)
