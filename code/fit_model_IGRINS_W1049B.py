@@ -30,7 +30,7 @@ for filename in filelist:
     flux = flux[:, 100:1948]
     wl = wl[:, 100:1948]
 
-    print(wl.shape)
+    #print(wl.shape)
     
     fluxes.append(flux)
     wls.append(wl)
@@ -68,7 +68,7 @@ wls = wls[:, 1:24, :]
 
 # original model from Ian's daofind directory
 #model = Table.read('/Users/bbiller/Data/Doppler_imaging_code/daofiles/lte015-5.0-0.0a+0.0.BT-Settl.spec.7.xz', format='fits')
-model = Table.read('/Users/bbiller/Data/Doppler_imaging_code/BT-Settl_lte015-5.0-0.0+0.0_orig.fits', format='fits')
+model = Table.read(f'{homedir}/uoedrive/data/BTSettlModels/CIFIST2015/lte015.0-5.0-0.0a+0.0.BT-Settl.spec.fits', format='fits')
 model['wl'] = model['Wavelength']
 model['flux'] = model['Flux']
 

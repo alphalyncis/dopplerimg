@@ -47,7 +47,7 @@ class FittingTask():
 
         # get time-integrated filtered data
         avg_obs = np.median(self.data['obs0'], axis=0)*14.
-        self.f_obs = np.vstack([signal.medfilt(avg_obs[band], 3) for band in range(4)])
+        self.f_obs = np.vstack([signal.medfilt(avg_obs[jj], 3) for jj in range(4)])
         
         # get data for individual timeframes, TODO: try if fits better
         self.f_obs_times = self.data['obs0']
@@ -68,6 +68,60 @@ class FittingTask():
         self.pix = np.arange(self.npix, dtype=float) / self.npix
 
         return self
+    
+    @classmethod
+    def from_IGRINS(cls, datadir, band="K"):
+        """Creates a fitting task from IGRINS data"""
+        self = cls()
+        self.comment = f"Fitting data set {datafile}."
+
+        #  Open data
+        if band == "K":
+            filelist = sorted(glob.glob(f'{datadir}/SDCK*_1f.spec.fits'))
+        elif band == "H":
+            filelist = sorted(glob.glob(f'{datadir}/SDCH*_1f.spec.fits'))
+        
+        fluxes = []
+        wls = []
+        for filename in filelist:
+            wlname = filename.split('_1f')[0]+'.wave.fits'
+
+            flux = fits.getdata(filename)
+            wl = fits.getdata(wlname)
+
+            # trim first and last 100 columns
+            flux = flux[:, 100:1948]
+            wl = wl[:, 100:1948]
+
+            fluxes.append(flux)
+            wls.append(wl)
+        
+        # Collapse data over the whole observation into one mean, smoothed spectrum
+        dims = np.array(fluxes).shape
+        fluxes = np.array(fluxes)
+        wls = np.array(wls)
+        
+        # remove first order with all NaNs when making various arrays
+        avg_obs = np.median(fluxes[:, 1:, :], axis=0)*dims[0]  # make mean spectrum
+        self.f_obs = np.vstack([signal.medfilt(avg_obs[jj], 3) for jj in range(dims[1]-1)])  # smooth spectrum
+        
+        # get errors of data
+        self.error_obs = np.median(fluxes[:, 1:, :], axis=0)*np.sqrt(dims[0])  # make mean noise spectrum (assuming just photon noise)
+        self.error_obs /= np.nanmedian(self.f_obs, 1).reshape(dims[1]-1,1)
+        
+        # normalize
+        self.f_obs /= np.nanmedian(self.f_obs, 1).reshape(dims[1]-1,1)
+        self.weight_obs = 1./self.error_obs**2   # make noise spectrum
+        #ind = np.where(np.isinf(wfobs0)) # set infinite values in noise spectrum to NaNs
+        #wfobs0[ind] = np.nan
+        wind = np.isinf(self.weight_obs)  # remove points with infinite values
+        self.weight_obs[wind] = 0.
+
+        # fix wavelength array to have same shape
+        wls = wls[:, 1:24, :]
+
+        #TODO: to be done
+
 
 
     def plot_obs(self, time_averaged=True):
@@ -279,7 +333,7 @@ class FittingTask():
                 ax = fig.add_subplot(4,1,j+1)
                 ax.plot(self.lam_obs[j, :], self.f_obs[j, :], color='black', label="observation")
                 if include_telluric:
-                    ax.plot(self.lam_obs[j, :], res['spec'][j], color='red', label="best-fit (with telluric")
+                    ax.plot(self.lam_obs[j, :], res['spec'][j], color='red', label="best-fit (with telluric)")
                 else:
                     ax.plot(self.lam_obs[j, :], res['spec'][j], color='red', label="best-fit")
                 # ax.plot(self.lam_obs[j, :], chipmodnobroad[j, :], color='red', alpha=0.1, label="best-fit but no broaden")
