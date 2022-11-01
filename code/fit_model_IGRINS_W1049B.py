@@ -1,4 +1,3 @@
-from re import M
 import numpy as np
 from astropy.table import Table
 import modelfitting as mf
