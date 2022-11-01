@@ -1,0 +1,298 @@
+SIMPLE  =                    T / Written by IDL:  Wed Mar 11 18:47:33 2020      
+BITPIX  =                  -32 / array data type                                
+NAXIS   =                    2 / number of array dimensions                     
+NAXIS1  =                 2048 /Number of positions along axis 1                
+NAXIS2  =                   24 /Number of positions along axis 2                
+EXTEND  =                    T                                                  
+I_HDRVER= '0.992   '           / version of IGRINS FITS Header                  
+OBSERVAT= 'Gemini Observatory' / Name of the observatory                        
+TELESCOP= 'Gemini South'       / Name of the telescope                          
+INSTRUME= 'IGRINS  '           / Name of the instrument                         
+DETECTOR= 'H2RG    '           / name of Detector                               
+TIMESYS = 'UTC     '           / Time system used in this header                
+OBSERVER= 'IGRINS observer'    / Observer                                       
+OBJECT  = 'HIP 45977'          / name of Object                                 
+PROGID  = 'GS-CAL20200212'     / Program ID                                     
+GEMPRID = 'GS-CAL20200212'     / Gemini Program ID                              
+EXPTIME =                 20.0 / Integration time in seconds                    
+TEMP-DET=                 65.2 / Temperature of Detector (K)                    
+TEMP-GRA=                130.0 / Temperature of Immersion Grating (K)           
+BAND    = 'K       '           / Band of Spectrum                               
+OBJTYPE = 'STD     '           / Type of exposure                               
+FRMTYPE = 'A       '           / Type of Frames (A/B)                           
+UTDATE  = '20200212'           / UT date as integer in yyyymmdd format          
+DATE-OBS= '2020-02-12T04:08:44.602' / Date time (UTC) of start of observation   
+DATE-END= '2020-02-12T04:01:13.133' / Date time (UTC) of end of observation     
+UT-OBS  =              4.14572 / [h], Start time of integration                 
+UT-END  =              4.02031 / [h], End time of integration                   
+JD-OBS  =       2458891.672738 / DATE-OBS as Julian Date                        
+JD-END  =       2458891.667513 / DATE-END as Julian Date                        
+MJD-OBS =         58891.172738 / MJD-OBS as Modified Julian Date                
+TELPA   =  / Paralactic Angle                                                   
+RADECSYS= 'FK5     '           / Coordinate System                              
+TELRA   = '09:22:33.799'       / Current telescope right ascension              
+TELDEC  = '-52:07:25.18'       / Current telescope declination                  
+TELEPOCH=               2000.0 / Current telescope epoch                        
+OBJRA   =         140.64184167 / Current object right ascension                 
+OBJDEC  =         -52.12496944 / Current object declination                     
+OBJEPOCH=               2000.0 / Current object epoch                           
+USERRA  = '9:22:34.042'        / User-specified RA                              
+USERDEC = '-52:07:29.89'       / User-specified Dec.                            
+USEREPOC=               2000.0 / User coord epoch                               
+FOCUSVAL=                    0 / Telescope focus value                          
+AUTOGUID= '-       '           / Autoguiding on/off log                         
+AMSTART =                1.083 / Airmass at start of observation                
+AMEND   =                1.088 / Airmass at end of observation                  
+HASTART = '23:29:09.6'         / [h] HA at start of run                         
+HAEND   = '23:31:56.64'        / [h] HA at end of run                           
+LSTSTART= '08:52:24.8'         / [h] LST at start of run                        
+LSTEND  = '08:44:57.5'         / [h] LST at end of run                          
+ZDSTART =              22.6174 / [d] ZD at start of run                         
+ZDEND   =              23.2044 / [d] ZD at end of run                           
+PASTART =                 90.0 / [d] rotator position angle at start            
+PAEND   =                 90.0 / [d] rotator position angle at end              
+BARPRESS=  / [mbar][hPa], Ambient pressure                                      
+AIRTEMP =  / [degC], Air temperature                                            
+HUMIDITY=                 16.3 / [per cent], Relative Humidity                  
+DEWPOINT=  / [degC], Dewpoint                                                   
+GAIN    =                  2.0 / [electrons/ADU], Conversion Gain               
+NSAMP   =                   13 / Number of Fowler Sampling                      
+RDNOISE =                  9.0 / Read Noise of Fowler Sampled Image with NSAMP  
+SLIT_CX =                 1024 / Center position of slit in the SVC image       
+SLIT_CY =                 1021 / Center position of slit in the SVC image       
+SLIT_WID=                    8 / (px) Width of slit                             
+SLIT_LEN=                  112 / (px) Length of slit                            
+SLIT_ANG=                  135 / (d) Position angle of slit in the image        
+DATE    = '2020-02-12'         / Creation UTC (CCCC-MM-DD) date of FITS header  
+ACQTIME =   2458891.6733333338 /UTC Julian time                                 
+ACQTIME1= '2020-02-12-04:09:36.673' /UTC time (YYYY-MM-DD HH:MM:SS.MS)          
+ACQTYPE =                    5 /CDSResult                                       
+UNITS   = 'ADUs    '           /                                                
+LONGSTRN= 'OGIP 1.0'           / The OGIP long string convention may be used.   
+NEXTRAP =                    0 /Number of extral pixels per row                 
+NEXTRAL =                    0 /Number of extral line per frame                 
+ASIC_NUM= 'SC2-B-010-JWST'     /ASIC serial number                              
+SCA_ID  = 'C001    '           /SCA number                                      
+MUXTYPE =                    2 /1- H1RG; 2- H2RG; 4- H4RG                       
+NOUTPUTS=                   32 /Number of detector outputs                      
+NADCS   =                    1 /Number of averaged ADCs used per output         
+PDDECTOR=                    0 /Power down detector                             
+CLKOFF  =                    0 /Turn off clocks                                 
+WARMTST =                    0 /0- cold test; 1- warm test                      
+CLOCKING=                    0 /0- normal clocking; 1- enhanced horizonal clocki
+GLBRESET=                    0 /0- pixel-by-pixel or line-by-line rest; 1- globa
+FRMODE  =                    0 /0- full frame mode; 1- window mode              
+EXPMODE =                    1 /0- Ramp mode; 1- Fowler sampling mode           
+NRESETS =                    1 /Number of resets before integration             
+FRMTIME =            1.4547900 /Frame time                                      
+EXPTIMET=                 1.09 / sec                                            
+DATAMODE=                    5 /Parallel read, 8 bit bus, 16 bit data           
+DATLEVEL=                    1 /0- CMO; 1- LVDS                                 
+ASICGAIN=                    8 /8 (12dB, large Cin)                             
+NOMGAIN =                    8 /8 (12dB, large Cin)                             
+AMPRESET=                    0 /0- Reset once per frame; 1- Reset once per row  
+KTCREMOV=                    0 /0- No kTC Removal; 1- kTC Removal               
+SRCCUR  =                    0 /0-No source current to inp ; 1 - Source current 
+AMPINPUT=                    1 /0- VREFMAIN as ref; 1- InPCommon as ref; 2- user
+V4V3V2V1= '0x4502  '           /preamp input by user                            
+TSTATION= 'Probe1  '           /Test station id.                                
+HXRGVER = 'v2.3.2  '           /HXRG IDL software version number                
+MCLK    =            10.000000 /MHz. Master Clock.                              
+COMMENT  This FITS file may contain long string keyword values that are         
+COMMENT  continued over multiple keywords.  This convention uses the  '&'       
+COMMENT  character at the end of a string which is then continued               
+COMMENT  on subsequent keywords whose name = 'CONTINUE'.                        
+FITSFILE= 'D:\HXRG\H2RG-C001-ASIC-SC2-B-010-JWST\FSRamp\20200212040854\Result\&'
+CONTINUE  'CDSResult.fits'                                                      
+OBSID   =                   47 / obsid                                          
+OBSDATE = '20200211'           / Local date at the sunset                       
+I_HDRVER= '0.992   '           / version of IGRINS FITS Header                  
+OBSERVAT= 'Gemini Observatory' / Name of the observatory                        
+TELESCOP= 'Gemini South'       / Name of the telescope                          
+INSTRUME= 'IGRINS  '           / Name of the instrument                         
+DETECTOR= 'H2RG    '           / name of Detector                               
+TIMESYS = 'UTC     '           / Time system used in this header                
+OBSERVER= 'IGRINS observer'    / Observer                                       
+OBJECT  = 'SKY 300s'           / name of Object                                 
+PROGID  = 'GS-CAL20200212'     / Program ID                                     
+GEMPRID = 'GS-CAL20200212'     / Gemini Program ID                              
+EXPTIME =                300.0 / Integration time in seconds                    
+TEMP-DET=                 65.2 / Temperature of Detector (K)                    
+TEMP-GRA=                130.0 / Temperature of Immersion Grating (K)           
+BAND    = 'K       '           / Band of Spectrum                               
+OBJTYPE = 'SKY     '           / Type of exposure                               
+FRMTYPE = '-       '           / Type of Frames (A/B)                           
+UTDATE  = '20200212'           / UT date as integer in yyyymmdd format          
+DATE-OBS= '2020-02-12T03:55:42.644' / Date time (UTC) of start of observation   
+DATE-END= '2020-02-12T04:01:13.133' / Date time (UTC) of end of observation     
+UT-OBS  =              3.92851 / [h], Start time of integration                 
+UT-END  =              4.02031 / [h], End time of integration                   
+JD-OBS  =       2458891.663688 / DATE-OBS as Julian Date                        
+JD-END  =       2458891.667513 / DATE-END as Julian Date                        
+MJD-OBS =         58891.163688 / MJD-OBS as Modified Julian Date                
+TELPA   =  / Paralactic Angle                                                   
+RADECSYS= 'FK5     '           / Coordinate System                              
+TELRA   = '09:12:01.176'       / Current telescope right ascension              
+TELDEC  = '-07:50:16.78'       / Current telescope declination                  
+TELEPOCH=               2000.0 / Current telescope epoch                        
+OBJRA   =         138.00487083 / Current object right ascension                 
+OBJDEC  =          -7.83809722 / Current object declination                     
+OBJEPOCH=               2000.0 / Current object epoch                           
+USERRA  = '9:12:01.169'        / User-specified RA                              
+USERDEC = '-7:50:17.15'        / User-specified Dec.                            
+USEREPOC=               2000.0 / User coord epoch                               
+FOCUSVAL=                    0 / Telescope focus value                          
+AUTOGUID= '-       '           / Autoguiding on/off log                         
+AMSTART =                1.091 / Airmass at start of observation                
+AMEND   =                1.088 / Airmass at end of observation                  
+HASTART = '23:26:20.76'        / [h] HA at start of run                         
+HAEND   = '23:31:56.64'        / [h] HA at end of run                           
+LSTSTART= '08:39:21.6'         / [h] LST at start of run                        
+LSTEND  = '08:44:57.5'         / [h] LST at end of run                          
+ZDSTART =              23.6081 / [d] ZD at start of run                         
+ZDEND   =              23.2044 / [d] ZD at end of run                           
+PASTART =                 90.0 / [d] rotator position angle at start            
+PAEND   =                 90.0 / [d] rotator position angle at end              
+BARPRESS=  / [mbar][hPa], Ambient pressure                                      
+AIRTEMP =  / [degC], Air temperature                                            
+HUMIDITY=                 17.1 / [per cent], Relative Humidity                  
+DEWPOINT=  / [degC], Dewpoint                                                   
+GAIN    =                  2.0 / [electrons/ADU], Conversion Gain               
+NSAMP   =                   16 / Number of Fowler Sampling                      
+RDNOISE =                  9.0 / Read Noise of Fowler Sampled Image with NSAMP  
+SLIT_CX =                 1024 / Center position of slit in the SVC image       
+SLIT_CY =                 1021 / Center position of slit in the SVC image       
+SLIT_WID=                    8 / (px) Width of slit                             
+SLIT_LEN=                  112 / (px) Length of slit                            
+SLIT_ANG=                  135 / (d) Position angle of slit in the image        
+DATE    = '2020-02-12'         / Creation UTC (CCCC-MM-DD) date of FITS header  
+ACQTIME =   2458891.6676273155 /UTC Julian time                                 
+ACQTIME1= '2020-02-12-04:01:23.667' /UTC time (YYYY-MM-DD HH:MM:SS.MS)          
+ACQTYPE =                    5 /CDSResult                                       
+UNITS   = 'ADUs    '           /                                                
+LONGSTRN= 'OGIP 1.0'           / The OGIP long string convention may be used.   
+NEXTRAP =                    0 /Number of extral pixels per row                 
+NEXTRAL =                    0 /Number of extral line per frame                 
+ASIC_NUM= 'SC2-B-010-JWST'     /ASIC serial number                              
+SCA_ID  = 'C001    '           /SCA number                                      
+MUXTYPE =                    2 /1- H1RG; 2- H2RG; 4- H4RG                       
+NOUTPUTS=                   32 /Number of detector outputs                      
+NADCS   =                    1 /Number of averaged ADCs used per output         
+PDDECTOR=                    0 /Power down detector                             
+CLKOFF  =                    0 /Turn off clocks                                 
+WARMTST =                    0 /0- cold test; 1- warm test                      
+CLOCKING=                    0 /0- normal clocking; 1- enhanced horizonal clocki
+GLBRESET=                    0 /0- pixel-by-pixel or line-by-line rest; 1- globa
+FRMODE  =                    0 /0- full frame mode; 1- window mode              
+EXPMODE =                    1 /0- Ramp mode; 1- Fowler sampling mode           
+NRESETS =                    1 /Number of resets before integration             
+FRMTIME =            1.4547900 /Frame time                                      
+EXPTIMET=               276.72 / sec                                            
+DATAMODE=                    5 /Parallel read, 8 bit bus, 16 bit data           
+DATLEVEL=                    1 /0- CMO; 1- LVDS                                 
+ASICGAIN=                    8 /8 (12dB, large Cin)                             
+NOMGAIN =                    8 /8 (12dB, large Cin)                             
+AMPRESET=                    0 /0- Reset once per frame; 1- Reset once per row  
+KTCREMOV=                    0 /0- No kTC Removal; 1- kTC Removal               
+SRCCUR  =                    0 /0-No source current to inp ; 1 - Source current 
+AMPINPUT=                    1 /0- VREFMAIN as ref; 1- InPCommon as ref; 2- user
+V4V3V2V1= '0x4502  '           /preamp input by user                            
+TSTATION= 'Probe1  '           /Test station id.                                
+HXRGVER = 'v2.3.2  '           /HXRG IDL software version number                
+MCLK    =            10.000000 /MHz. Master Clock.                              
+FITSFILE= 'D:\HXRG\H2RG-C001-ASIC-SC2-B-010-JWST\FSRamp\20200212035555\Result\&'
+CONTINUE  'CDSResult.fits'                                                      
+OBSID   =                   46 / obsid                                          
+OBSDATE = '20200211'           / Local date at the sunset                       
+WCSDIM  =                    3                                                  
+CTYPE1  = 'MULTISPE'                                                            
+CTYPE2  = 'MULTISPE'                                                            
+CTYPE3  = 'LINEAR  '                                                            
+LTM1_1  =                   1.                                                  
+LTM2_2  =                   1.                                                  
+CD1_1   =                   1.                                                  
+CD2_2   =                   1.                                                  
+CD3_3   =                   1.                                                  
+LTM3_3  =                   1.                                                  
+WAT0_001= 'system=multispec'                                                    
+WAT1_001= 'wtype=multispec label=Wavelength units=angstroms'                    
+WAT3_001= 'wtype=linear'                                                        
+BANDID1 = 'spectrum - background median, weights variance, clean no'            
+WAT2_001= 'wtype=multispec spec1 = "1 71 2 24846.1668772 0.166688065137 2048 0.'
+WAT2_002= '0 0.0 1.0 1.0 0.0 1 5 1 2048 25022.478491379978 170.54846671725096 -'
+WAT2_003= '5.457219524526433 0.11881220447762392 0.0018717528815347998" spec2 ='
+WAT2_004= ' "2 72 2 24505.2317996 0.164670791044 2048 0.0 0.0 1.0 1.0 0.0 1 5 1'
+WAT2_005= ' 2048 24679.408652707225 168.51880956261414 -5.40409107387593 0.0832'
+WAT2_006= '0207166033093 0.015518876136588085" spec3 = "3 73 2 24173.7252671 0.'
+WAT2_007= '162698099065 2048 0.0 0.0 1.0 1.0 0.0 1 5 1 2048 24345.815131302264 '
+WAT2_008= '166.5256214672942 -5.349319529070705 0.05672426589013595 0.025518893'
+WAT2_009= '211582697" spec4 = "4 74 2 23851.2648784 0.160767254052 2048 0.0 0.0'
+WAT2_010= ' 1.0 1.0 0.0 1 5 1 2048 24021.312719592614 164.56730551566977 -5.293'
+WAT2_011= '3272567586735 0.03817977726288111 0.03228760815236258" spec5 = "5 75'
+WAT2_012= ' 2 23537.4886272 0.158875666737 2048 0.0 0.0 1.0 1.0 0.0 1 5 1 2048 '
+WAT2_013= '23705.536754409684 162.64234996094856 -5.236514097394411 0.026433543'
+WAT2_014= '06537843 0.03621864874953265" spec6 = "6 76 2 23232.0535597 0.157020'
+WAT2_015= '884125 2048 0.0 0.0 1.0 1.0 0.0 1 5 1 2048 23398.141765383207 160.74'
+WAT2_016= '932262196188 -5.179258847177238 0.020410240730730177 0.0376849255525'
+WAT2_017= '5889" spec7 = "7 77 2 22934.6345384 0.155200580651 2048 0.0 0.0 1.0 '
+WAT2_018= '1.0 0.0 1 5 1 2048 23098.800228655684 158.8868657165612 -5.121920624'
+WAT2_019= '593367 0.019090408602674604 0.03703997713209284" spec8 = "8 78 2 226'
+WAT2_020= '44.9230992 0.15341255001 2048 0.0 0.0 1.0 1.0 0.0 1 5 1 2048 22807.2'
+WAT2_021= '01416464835 157.05369109245513 -5.0648401317969665 0.021506865112616'
+WAT2_022= '99 0.03461921189000425" spec9 = "9 79 2 22362.6263964 0.151654697608'
+WAT2_023= ' 2048 0.0 0.0 1.0 1.0 0.0 1 5 1 2048 22523.050334099666 155.24857582'
+WAT2_024= '0248 -5.008340820205843 0.026741399906848238 0.030741055496850345" s'
+WAT2_025= 'pec10 = "10 80 2 22087.4662269 0.149925033581 2048 0.0 0.0 1.0 1.0 0'
+WAT2_026= '.0 1 5 1 2048 22246.0667365847 153.4703581170202 -4.95272996862889 0'
+WAT2_027= '.033921713153830815 0.02570801237660093" spec11 = "11 81 2 21819.178'
+WAT2_028= '1256 0.148221666329 2048 0.0 0.0 1.0 1.0 0.0 1 5 1 2048 21975.984218'
+WAT2_029= '20253 151.71793357184305 -4.898299681695094 0.042218581553378466 0.0'
+WAT2_030= '1980764842049244" spec12 = "12 82 2 21557.5105284 0.146542796528 204'
+WAT2_031= '8 0.0 0.0 1.0 1.0 0.0 1 5 1 2048 21712.54936863662 149.9902516474922'
+WAT2_032= ' -4.845327814924292 0.050843231722354526 0.013313501951748139" spec1'
+WAT2_033= '3 = "13 83 2 21302.2239949 0.144886711564 2048 0.0 0.0 1.0 1.0 0.0 1'
+WAT2_034= ' 5 1 2048 21455.52099011575 148.28631243504668 -4.794078833280181 0.'
+WAT2_035= '059044903455910874 0.00648592870542822" spec14 = "14 84 2 21053.0904'
+WAT2_036= '862 0.14325178038 2048 0.0 0.0 1.0 1.0 0.0 1 5 1 2048 21204.66937047'
+WAT2_037= '6917 146.6051636402924 -4.744804608138785 0.06610858703188907 -0.000'
+WAT2_038= '42711347468368013" spec15 = "15 85 2 20809.8926951 0.141636448672 20'
+WAT2_039= '48 0.0 0.0 1.0 1.0 0.0 1 5 1 2048 20959.775607541207 144.94589778286'
+WAT2_040= '294 -4.69774515810208 0.07135292024620826 -0.007189335346037604" spe'
+WAT2_041= 'c16 = "16 86 2 20572.4234213 0.140039234432 2048 0.0 0.0 1.0 1.0 0.0'
+WAT2_042= ' 1 5 1 2048 20720.630980626447 143.3076495907785 -4.653129338112598 '
+WAT2_043= '0.07412823215838643 -0.013575437864182534" spec17 = "17 87 2 20340.4'
+WAT2_044= '849913 0.138458723787 2048 0.0 0.0 1.0 1.0 0.0 1 5 1 2048 20487.0363'
+WAT2_045= '6540362 141.68959357468304 -4.611175481049863 0.07381472175923717 -0'
+WAT2_046= '.019370480551731607" spec18 = "18 88 2 20113.8887166 0.136893567133 '
+WAT2_047= '2048 0.0 0.0 1.0 1.0 0.0 1 5 1 2048 20258.801688649623 140.090941767'
+WAT2_048= '45828 -4.572091995575638 0.0698207608083982 -0.02436929297290747" sp'
+WAT2_049= 'ec19 = "19 89 2 19892.4543891 0.135342475522 2048 0.0 0.0 1.0 1.0 0.'
+WAT2_050= '0 1 5 1 2048 20035.74541975806 138.51094161624587 -4.536077923668193'
+WAT2_051= ' 0.061581311104413346 -0.028375925823821865" spec20 = "20 90 2 19676'
+WAT2_052= '.0098098 0.133804217292 2048 0.0 0.0 1.0 1.0 0.0 1 5 1 2048 19817.69'
+WAT2_053= '4096149553 136.94887401497425 -4.503323460995823 0.04855644724929760'
+WAT2_054= '6 -0.031203138654482387" spec21 = "21 91 2 19464.3903492 0.132277614'
+WAT2_055= '922 2048 0.0 0.0 1.0 1.0 0.0 1 5 1 2048 19604.481879973435 135.40405'
+WAT2_056= '146663437 -4.474010442961401 0.030229976833489765 -0.032671921370038'
+WAT2_057= '63" spec22 = "22 92 2 19257.4385354 0.130761542084 2048 0.0 0.0 1.0 '
+WAT2_058= '1.0 0.0 1 5 1 2048 19395.950143720416 133.8758163653873 -4.448312799'
+WAT2_059= '1149205 0.006108150591996983 -0.0326110469265" spec23 = "23 93 2 190'
+WAT2_060= '55.0036694 0.129254920897 2048 0.0 0.0 1.0 1.0 0.0 1 5 1 2048 19191.'
+WAT2_061= '947082569724 132.3635393895226 -4.426396978135377 -0.024281544207792'
+WAT2_062= '393 -0.030856652869938914" spec24 = "24 94 2 18856.9414652 0.1277567'
+WAT2_063= '19347 2048 0.0 0.0 1.0 1.0 0.0 1 5 1 2048 18992.327351480257 130.866'
+WAT2_064= '61799697055 -4.408422345793034 -0.061391513378411616 -0.027251849631'
+WAT2_065= '643905" spec25 = "25 95 2 18663.1137117 0.126265948873 2048 0.0 0.0 '
+WAT2_066= '1.0 1.0 0.0 1 5 1 2048 18796.951725202056 129.38447501585748 -4.3945'
+WAT2_067= '41557720007 -0.10565511406380958 -0.021646353521162346" spec26 = "26'
+WAT2_068= ' 96 2 18473.3879569 0.124781662102 2048 0.0 0.0 1.0 1.0 0.0 1 5 1 20'
+WAT2_069= '48 18605.686779537307 127.91655732313578 -4.384900908895495 -0.15748'
+WAT2_070= '764686192393 -0.013896142651887862"'                                 
+COMMENT FITS (Flexible Image Transport System) format is defined in 'Astronomy  
+COMMENT and Astrophysics', volume 376, page 359; bibcode 2001A&A...376..359H    
+COMMENT  This FITS file may contain long string keyword values that are         
+COMMENT  continued over multiple keywords.  This convention uses the  '&'       
+COMMENT  character at the end of a string which is then continued               
+COMMENT  on subsequent keywords whose name = 'CONTINUE'.                        
+COMMENT FITS (Flexible Image Transport System) format is defined in 'Astronomy  
+COMMENT and Astrophysics', volume 376, page 359; bibcode 2001A&A...376..359H    
