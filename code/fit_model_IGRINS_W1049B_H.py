@@ -88,6 +88,7 @@ def fit(modelpath):
     vsini = []
     limbdark = []
     rv = []
+    fitres = []
     chisq = []
 
     for jj in (np.arange(norders)):
@@ -131,6 +132,7 @@ def fit(modelpath):
             limbdark.append(fit[0][1])
             rv.append(fit[0][2])
             chisq.append(fit[1])
+            fitres.append(fit)
 
             chisqarr[jj] = fit[1]
 
@@ -152,16 +154,18 @@ def fit(modelpath):
     results['vsini'] = vsini
     results['limbdark'] = limbdark
     results['rv'] = rv
+    results['fit'] = str(fitres)
 
-    results.write(f'result/IGRINS_W1049B_H_fitting_results_{modelname[:12]}.txt', format='ascii')
+    resultdir = "result/CIFIST"
+    results.write(f'{resultdir}/IGRINS_W1049B_H_fitting_results_{modelname[:12]}.txt', format='ascii')
 
     #fits.writeto('IGRINS_W1049B_chipmodnobroad.fits', chipmodnobroad)
-    fits.writeto(f'result/IGRINS_W1049B_H_chipmods_{modelname[:12]}.fits', chipmods, overwrite=True)
-    fits.writeto(f'result/IGRINS_W1049B_H_chiplams_{modelname[:12]}.fits', chiplams, overwrite=True)
+    fits.writeto(f'{resultdir}/IGRINS_W1049B_H_chipmods_{modelname[:12]}.fits', chipmods, overwrite=True)
+    fits.writeto(f'{resultdir}/IGRINS_W1049B_H_chiplams_{modelname[:12]}.fits', chiplams, overwrite=True)
 
     
 if __name__ == "__main__":
-    modellist = sorted(glob.glob(f'{homedir}/uoedrive/data/BTSettlTemps5.0/*.fits'))
+    modellist = sorted(glob.glob(f'{homedir}/uoedrive/data/BTSettlModels/CIFIST2015/*.fits'))
     for model in modellist:
         print("running model fit", model)
         fit(modelpath=model)
