@@ -89,8 +89,10 @@ def fit(modelpath):
     orderval=[]
     obsval=[]
     vsini = []
-    limbdark = []
+    lld = []
     rv = []
+    wcoefs = []
+    ccoefs = []
     chisq = []
 
     for jj in (np.arange(norders)):
@@ -120,7 +122,7 @@ def fit(modelpath):
             fitargs = (mf.modelspec_template, lam_template, template, NPW, NPC, npix, fobs0[jj], wfobs0[jj])
 
             fit = mf.fmin(mf.errfunc, guess, args=fitargs, full_output=True, disp=True, maxiter=10000, maxfun=100000)
-            print(fit[0][0:4])
+            print("fitted params:", fit[0])
             mymod, myw = mf.modelspec_template(fit[0], *fitargs[1:-2], retlam=True)
             #mycor = mf.modelspec_tel_template(fit[0], lam_template, np.ones(template.size), *fitargs[3:-2], retlam=False)
             chipfits.append(fit)
@@ -131,15 +133,12 @@ def fit(modelpath):
             orderval.append(jj)
             obsval.append(obs)
             vsini.append(fit[0][0])
-            limbdark.append(fit[0][1])
+            lld.append(fit[0][1])
             rv.append(fit[0][2])
+            wcoefs.append(fit[0][3:6])
+            ccoefs.append(fit[0][6:8])
             chisq.append(fit[1])
             
-            # make non-broadened model
-            fit[0][0:2] = 0
-            mymodnobroad, mywnobroad = mf.modelspec_template(fit[0], *fitargs[1:-2], retlam=True)
-            chipmodnobroad[obs,jj] = mymodnobroad
-
             chisqarr[obs,jj] = fit[1]
 
 
@@ -149,14 +148,17 @@ def fit(modelpath):
     results['obs'] = obsval
     results['chisq'] = chisq
     results['vsini'] = vsini
-    results['limbdark'] = limbdark
+    results['limbdark'] = lld
     results['rv'] = rv
+    results['wcoef'] = f"{wcoefs[0]}, {wcoefs[1]}, {wcoefs[2]}, {wcoefs[3]}"
+    results['ccoef'] = f"{ccoefs[0]}, {ccoefs[1]}"
 
-    results.write(f'result/IGRINS_W1049B_fitting_results_{modelname[:12]}.txt', format='ascii')
+    resultdir = "result/CIFIST"
+    results.write(f'{resultdir}/IGRINS_W1049B_K_fitting_results_{modelname[:12]}.txt', format='ascii')
 
     #fits.writeto('IGRINS_W1049B_chipmodnobroad.fits', chipmodnobroad)
-    fits.writeto(f'result/IGRINS_W1049B_chipmods_{modelname[:12]}.fits', chipmods)
-    fits.writeto(f'result/IGRINS_W1049B_chiplams_{modelname[:12]}.fits', chiplams)
+    fits.writeto(f'result/IGRINS_W1049B_K_chipmods_{modelname[:12]}.fits', chipmods, overwrite=True)
+    fits.writeto(f'result/IGRINS_W1049B_K_chiplams_{modelname[:12]}.fits', chiplams, overwrite=True)
 
 def fit_nonstacked(modelpath):
     """
@@ -300,7 +302,11 @@ def fit_nonstacked(modelpath):
 
 
 if __name__ == "__main__":
-    modellist = sorted(glob.glob(f'{homedir}/uoedrive/data/BTSettlTemps5.0/*.fits'))
+    try:
+        modeldir = sys.argv[1] # e.g. BTSettlModels/CIFIST2015
+    except:
+        raise NameError("Please provide a model directory under 'home/uoedrive/data/'.")
+    modellist = sorted(glob.glob(f'{homedir}/uoedrive/data/{modeldir}/*.fits'))
     for model in modellist:
-        print("running model fit", model)
-        fit_nonstacked(modelpath=model)
+        print(f"***Running fit to model {model}***")
+        fit(modelpath=model)

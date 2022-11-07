@@ -1,5 +1,5 @@
 import numpy as np
-from astropy.table import Table, vstack
+from astropy.table import Table
 import modelfitting as mf
 import sys
 from scipy import signal
@@ -12,6 +12,9 @@ import os
 homedir = os.path.expanduser('~')
 
 def fit(modelpath):
+    """
+    Fit avged observations, but each obs with own wcoef.
+    """
     ###################################
     #  Open data
     ###################################
@@ -86,9 +89,10 @@ def fit(modelpath):
     orderval=[]
     obsval=[]
     vsini = []
-    limbdark = []
+    lld = []
     rv = []
-    fitres = []
+    wcoefs = []
+    ccoefs = []
     chisq = []
 
     for jj in (np.arange(norders)):
@@ -99,7 +103,7 @@ def fit(modelpath):
         template = model['flux'][tind]
         template /= np.median(template)
 
-        wcoef = np.polyfit(pix, wls[0, jj, :], NPW-1)
+        # fit continuum coefficients / flux scaling
         ccoef = [-0.1, 1.2/np.median(template)]
         NPC = len(ccoef)
         ind90 = np.sort(fobs0[jj])[int(0.9*npix)]  
@@ -118,7 +122,7 @@ def fit(modelpath):
             fitargs = (mf.modelspec_template, lam_template, template, NPW, NPC, npix, fobs0[jj], wfobs0[jj])
 
             fit = mf.fmin(mf.errfunc, guess, args=fitargs, full_output=True, disp=True, maxiter=10000, maxfun=100000)
-            print(fit[0][0:4])
+            print("fitted params:", fit[0])
             mymod, myw = mf.modelspec_template(fit[0], *fitargs[1:-2], retlam=True)
             #mycor = mf.modelspec_tel_template(fit[0], lam_template, np.ones(template.size), *fitargs[3:-2], retlam=False)
             chipfits.append(fit)
@@ -129,22 +133,13 @@ def fit(modelpath):
             orderval.append(jj)
             obsval.append(obs)
             vsini.append(fit[0][0])
-            limbdark.append(fit[0][1])
+            lld.append(fit[0][1])
             rv.append(fit[0][2])
+            wcoefs.append(fit[0][3:6])
+            ccoefs.append(fit[0][6:8])
             chisq.append(fit[1])
-            fitres.append(fit)
 
             chisqarr[jj] = fit[1]
-
-    # ind = np.where((chisqarr < 400.) & (chisqarr > 0.) & (np.isfinite(chisqarr)))# & (chisqarr > 1000.))
-    # ngood = len(ind[0])
-    # fig = plt.figure()
-    # for jj in (np.arange(ngood)):
-    #     ax = fig.add_subplot(ngood,1,jj+1)
-    #     ax.plot(wl[ind[0][jj], :], fobs0[ind[0][jj], :], color='black')
-    #     ax.plot(wl[ind[0][jj], :], chipmods[ind[0][jj], :], color='r')
-    #     ax.text(np.min(wl[ind[0][jj], :]), 0.8, chisqarr[ind][jj])
-    
 
     # make table of best parameters
     results = Table()
@@ -152,9 +147,10 @@ def fit(modelpath):
     results['obs'] = obsval
     results['chisq'] = chisq
     results['vsini'] = vsini
-    results['limbdark'] = limbdark
+    results['lld'] = lld
     results['rv'] = rv
-    results['fit'] = str(fitres)
+    results['wcoef'] = f"{wcoefs[0]}, {wcoefs[1]}, {wcoefs[2]}, {wcoefs[3]}"
+    results['ccoef'] = f"{ccoefs[0]}, {ccoefs[1]}"
 
     resultdir = "result/CIFIST"
     results.write(f'{resultdir}/IGRINS_W1049B_H_fitting_results_{modelname[:12]}.txt', format='ascii')
@@ -165,7 +161,11 @@ def fit(modelpath):
 
     
 if __name__ == "__main__":
-    modellist = sorted(glob.glob(f'{homedir}/uoedrive/data/BTSettlModels/CIFIST2015/*.fits'))
+    try:
+        modeldir = sys.argv[1] # e.g. BTSettlModels/CIFIST2015
+    except:
+        raise NameError("Please provide a model directory under 'home/uoedrive/data/'.")
+    modellist = sorted(glob.glob(f'{homedir}/uoedrive/data/{modeldir}/*.fits'))
     for model in modellist:
-        print("running model fit", model)
+        print(f"***Running fit to model {model}***")
         fit(modelpath=model)
