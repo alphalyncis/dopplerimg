@@ -5,4 +5,4 @@ docs
 .ipynb_checkpoints
 __pycache__
 result
-.out
+*/.out
