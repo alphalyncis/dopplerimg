@@ -148,7 +148,7 @@ def fit(modelpath):
     results['obs'] = obsval
     results['chisq'] = chisq
     results['vsini'] = vsini
-    results['limbdark'] = lld
+    results['lld'] = lld
     results['rv'] = rv
     results['wcoef'] = f"{wcoefs[0]}, {wcoefs[1]}, {wcoefs[2]}, {wcoefs[3]}"
     results['ccoef'] = f"{ccoefs[0]}, {ccoefs[1]}"
@@ -157,8 +157,8 @@ def fit(modelpath):
     results.write(f'{resultdir}/IGRINS_W1049B_K_fitting_results_{modelname[:12]}.txt', format='ascii')
 
     #fits.writeto('IGRINS_W1049B_chipmodnobroad.fits', chipmodnobroad)
-    fits.writeto(f'result/IGRINS_W1049B_K_chipmods_{modelname[:12]}.fits', chipmods, overwrite=True)
-    fits.writeto(f'result/IGRINS_W1049B_K_chiplams_{modelname[:12]}.fits', chiplams, overwrite=True)
+    fits.writeto(f'{resultdir}/IGRINS_W1049B_K_chipmods_{modelname[:12]}.fits', chipmods, overwrite=True)
+    fits.writeto(f'{resultdir}/IGRINS_W1049B_K_chiplams_{modelname[:12]}.fits', chiplams, overwrite=True)
 
 def fit_nonstacked(modelpath):
     """
