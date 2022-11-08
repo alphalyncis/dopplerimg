@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import os
 homedir = os.path.expanduser('~')
 
-def fit(modelpath):
+def fit(modelpath, band):
     """
     Fit avged observations, but each obs with own wcoef.
     """
@@ -19,7 +19,7 @@ def fit(modelpath):
     #  Open data
     ###################################
 
-    filelist = sorted(glob.glob(f'{homedir}/uoedrive/data/IGRINS/SDCK*_1f.spec.fits'))
+    filelist = sorted(glob.glob(f'{homedir}/uoedrive/data/IGRINS/SDC{band}*_1f.spec.fits'))
 
     fluxes = []
     wls = []
@@ -66,10 +66,15 @@ def fit(modelpath):
     # open model
     ##########################
 
-    model = Table.read(modelpath, format='fits')
-    modelname = modelpath.split("/")[-1]
-    model['wl'] = model['Wavelength']
-    model['flux'] = model['Flux']
+    if "BTSettl" in modelpath:
+        model = Table.read(modelpath, format='fits')
+        modelname = modelpath.split("/")[-1]
+        model['wl'] = model['Wavelength']
+        model['flux'] = model['Flux']
+
+    if "Callie" in modelpath:
+        model = fits.getdata(modelpath)
+        print(model)
 
     # set # of observations and # of orders to process
     nobs = wls.shape[0]
@@ -102,6 +107,12 @@ def fit(modelpath):
         lam_template = model['wl'][tind]
         template = model['flux'][tind]
         template /= np.median(template)
+    
+        # to be compatible with rotational profile convolution kernel
+        if len(lam_template) < 400:
+           new_lam = np.linspace(lam_template[0], lam_template[-1], 400)
+           template = np.interp(new_lam, lam_template, template)
+           lam_template = new_lam
 
         # fit continuum coefficients / flux scaling
         ccoef = [-0.1, 1.2/np.median(template)]
@@ -153,12 +164,13 @@ def fit(modelpath):
     results['wcoef'] = f"{wcoefs[0]}, {wcoefs[1]}, {wcoefs[2]}, {wcoefs[3]}"
     results['ccoef'] = f"{ccoefs[0]}, {ccoefs[1]}"
 
-    resultdir = "result/CIFIST"
-    results.write(f'{resultdir}/IGRINS_W1049B_K_fitting_results_{modelname[:12]}.txt', format='ascii')
-
-    #fits.writeto('IGRINS_W1049B_chipmodnobroad.fits', chipmodnobroad)
-    fits.writeto(f'{resultdir}/IGRINS_W1049B_K_chipmods_{modelname[:12]}.fits', chipmods, overwrite=True)
-    fits.writeto(f'{resultdir}/IGRINS_W1049B_K_chiplams_{modelname[:12]}.fits', chiplams, overwrite=True)
+    if "BTSettl" in modelpath:
+        resultdir = "result/CIFIST"
+    if "Callie" in modelpath:
+        resultdir = "result/Callie"
+    results.write(f'{resultdir}/IGRINS_W1049B_{band}_fitting_results_{modelname[:12]}.txt', format='ascii')
+    fits.writeto(f'{resultdir}/IGRINS_W1049B_{band}_chipmods_{modelname[:12]}.fits', chipmods, overwrite=True)
+    fits.writeto(f'{resultdir}/IGRINS_W1049B_{band}_chiplams_{modelname[:12]}.fits', chiplams, overwrite=True)
 
 def fit_nonstacked(modelpath):
     """
@@ -238,7 +250,7 @@ def fit_nonstacked(modelpath):
     orderval=[]
     obsval=[]
     vsini = []
-    limbdark = []
+    lld = []
     rv = []
     chisq = []
 
@@ -279,7 +291,7 @@ def fit_nonstacked(modelpath):
             orderval.append(jj)
             obsval.append(obs)
             vsini.append(fit[0][0])
-            limbdark.append(fit[0][1])
+            lld.append(fit[0][1])
             rv.append(fit[0][2])
             chisq.append(fit[1])
 
@@ -291,22 +303,29 @@ def fit_nonstacked(modelpath):
     results['obs'] = obsval
     results['chisq'] = chisq
     results['vsini'] = vsini
-    results['limbdark'] = limbdark
+    results['lld'] = lld
     results['rv'] = rv
 
-    results.write(f'result/IGRINS_W1049B_K_nonstack_fitting_results_{modelname[:12]}.txt', format='ascii')
-
-    #fits.writeto('IGRINS_W1049B_chipmodnobroad.fits', chipmodnobroad)
-    fits.writeto(f'result/IGRINS_W1049B_K_nonstack_chipmods_{modelname[:12]}.fits', chipmods)
-    fits.writeto(f'result/IGRINS_W1049B_K_nonstack_chiplams_{modelname[:12]}.fits', chiplams)
+    if "BTSettl" in modelpath:
+        results.write(f'result/IGRINS_W1049B_K_nonstack_fitting_results_{modelname[:12]}.txt', format='ascii')
+        fits.writeto(f'result/IGRINS_W1049B_K_nonstack_chipmods_{modelname[:12]}.fits', chipmods)
+        fits.writeto(f'result/IGRINS_W1049B_K_nonstack_chiplams_{modelname[:12]}.fits', chiplams)
 
 
 if __name__ == "__main__":
     try:
-        modeldir = sys.argv[1] # e.g. BTSettlModels/CIFIST2015
+        band = sys.argv[1] # "K" or "H"
+        try:
+            band in ["K", "H"]
+        except:
+            raise NotImplementedError("Band must be 'K' or 'H' ")
+    except:
+        raise NameError("Please provide a band 'K' or 'H'.")
+    try:
+        modeldir = sys.argv[2] # e.g. BTSettlModels/CIFIST2015; CallieModels
     except:
         raise NameError("Please provide a model directory under 'home/uoedrive/data/'.")
     modellist = sorted(glob.glob(f'{homedir}/uoedrive/data/{modeldir}/*.fits'))
     for model in modellist:
         print(f"***Running fit to model {model}***")
-        fit(modelpath=model)
+        fit(modelpath=model, band=band)
