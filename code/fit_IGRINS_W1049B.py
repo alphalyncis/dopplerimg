@@ -74,6 +74,7 @@ def fit(modelpath, band):
 
     if "Callie" in modelpath:
         model = fits.getdata(modelpath)
+        modelname = modelpath.split("/")[-1]
         print(model)
 
     # set # of observations and # of orders to process
