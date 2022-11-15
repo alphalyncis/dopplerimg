@@ -1,4 +1,8 @@
-venv
+venv/*
+!venv/src
+venv/src/*
+!venv/src/astrostarfish
+
 data
 docs
 .DS_Store
