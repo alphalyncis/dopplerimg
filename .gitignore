@@ -2,6 +2,8 @@ venv/*
 !venv/src
 venv/src/*
 !venv/src/astrostarfish
+venv/src/astrostarfish/*
+!venv/src/astrostarfish/Starfish
 
 data
 docs
