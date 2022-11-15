@@ -1,0 +1,12 @@
+frozen = [ "logg",]
+
+[parameters]
+vsini = 30.471
+vz = 33.987
+T = 1595.341
+logg = 5.0
+
+[metadata]
+name = "SpectrumModel"
+data = "Spectrum"
+emulator = "BTSettl_K_emu"
