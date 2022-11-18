@@ -11,33 +11,188 @@ import matplotlib.pyplot as plt
 import os
 homedir = os.path.expanduser('~')
 
-def fit(modelpath, band):
+def fit_stacked(target, modelpath, band):
     """
-    Fit avged observations, but each obs with own wcoef.
+    Fit averaged observations, wavelengths also averaged (One fit per order).
     """
     ###################################
-    #  Open data
+    ##  Open IGRINS data
     ###################################
 
-    filelist = sorted(glob.glob(f'{homedir}/uoedrive/data/IGRINS/SDC{band}*_1f.spec.fits'))
+    if target == "W1049B":
+        # TODO: not yet
+        raise NotImplementedError("Not yet.")
 
-    fluxes = []
-    wls = []
+    if target == "2M0036":
+        filelist = sorted(glob.glob(f'{homedir}/uoedrive/data/IGRINS_{target}/SDC{band}*.spec_a0v.fits'))
 
-    for filename in filelist:
-        wlname = filename.split('_1f')[0]+'.wave.fits'
+        fluxes = []
+        wls = []
+        for filename in filelist:
+            hdu = fits.open(filename)
+            flux = hdu[0].data
+            wl = hdu[1].data
 
-        flux = fits.getdata(filename)
-        wl = fits.getdata(wlname)
+            # trim first and last 100 columns
+            flux = flux[:, 100:1948]
+            wl = wl[:, 100:1948]
 
-        # trim first and last 100 columns
-        flux = flux[:, 100:1948]
-        wl = wl[:, 100:1948]
+            fluxes.append(flux)
+            wls.append(wl)
 
-        #print(wl.shape)
-        
-        fluxes.append(flux)
-        wls.append(wl)
+    ###############################
+    ## Collapse data over the whole observation into one mean, smoothed spectrum
+    ###############################
+
+    dims = np.array(fluxes).shape
+    fluxes = np.array(fluxes)
+    wls = np.array(wls)
+
+    # remove first order with all NaNs when making various arrays
+    obs0 = np.median(fluxes[:, 1:, :], axis=0)*dims[0]  # make mean spectrum
+    eobs0 = np.median(fluxes[:, 1:, :], axis=0)*np.sqrt(dims[0])  # make mean noise spectrum (assuming just photon noise)
+    fobs0 = np.vstack([signal.medfilt(obs0[jj], 3) for jj in range(dims[1]-1)])
+    eobs0 /= np.nanmedian(fobs0, 1).reshape(dims[1]-1,1)
+    fobs0 /= np.nanmedian(fobs0, 1).reshape(dims[1]-1,1)
+    wfobs0 = 1./eobs0**2
+    wind = np.isinf(wfobs0)
+    wfobs0[wind] = 0.
+
+    # fix wavelength array to have same shape
+    wls = wls[:, 1:24, :] 
+
+    ##########################
+    ## Open model
+    ##########################
+
+    if "BTSettl" in modelpath:
+        model = Table.read(modelpath, format='fits')
+        modelname = modelpath.split("/")[-1]
+        model['wl'] = model['Wavelength']
+        model['flux'] = model['Flux']
+
+    if "Callie" in modelpath:
+        model = fits.getdata(modelpath)
+        modelname = modelpath.split("/")[-1]
+
+    ##########################
+    ## Fitting model
+    ##########################
+    nobs = 1
+    norders = 20 # ignore last 2 orders of nan #dims[1]
+    npix = dims[2]
+
+    NPW = 4
+    pix = np.arange(npix, dtype=float)/npix
+    chipfits = []
+    chipmods = np.zeros((nobs, norders, npix), dtype=float)
+    chiplams = np.zeros((nobs, norders, npix), dtype=float)
+    #chipmodnobroad = np.zeros((norders, npix), dtype=float)
+    chipguesses = np.zeros((nobs, norders, npix), dtype=float)
+    chisqarr = np.zeros((nobs, norders, npix), dtype=float)
+
+    # set up tables for best fit vsini, limb darkening values, and rv
+    orderval=[]
+    obsval=[]
+    vsini = []
+    lld = []
+    rv = []
+    wcoefs = []
+    ccoefs = []
+    chisq = []
+
+    for jj in range(norders):
+        print(f"Current fitting: model {modelname}, order {jj}.")
+        lolim = wls[:, jj, :].min() - 0.003
+        hilim = wls[:, jj, :].max() + 0.003
+        tind = (model['wl']>lolim) * (model['wl'] < hilim)
+        lam_template = model['wl'][tind]
+        template = model['flux'][tind]
+        template /= np.median(template)
+
+        # to be compatible with rotational profile convolution kernel
+        if len(lam_template) < 400:
+           new_lam = np.linspace(lam_template[0], lam_template[-1], 400)
+           template = np.interp(new_lam, lam_template, template)
+           lam_template = new_lam
+
+        wcoef = np.polyfit(pix, wls[0, jj, :], NPW-1)
+        ccoef = [-0.1, 1.2/np.median(template)]
+        NPC = len(ccoef)
+        ind90 = np.sort(fobs0[jj])[int(0.9*npix)]  
+        ccoef = np.polyfit(pix[fobs0[jj]>ind90], fobs0[jj][fobs0[jj]>ind90], NPC-1)
+
+        obs = 0
+
+        guess = np.concatenate(([21, 0.3, 9e-5], wcoef, ccoef))
+        fitargs = (mf.modelspec_template, lam_template, template, NPW, NPC, npix, fobs0[jj], wfobs0[jj])
+        fit = mf.fmin(mf.errfunc, guess, args=fitargs, full_output=True, disp=False)
+        print("fitted params:", fit[0])
+        print("chisq:", fit[1])
+        mymod, myw = mf.modelspec_template(fit[0], *fitargs[1:-2], retlam=True)
+        chipfits.append(fit)
+        chipmods[obs, jj] = mymod
+        chiplams[obs, jj] = myw
+
+        # save best parameters
+        orderval.append(jj)
+        obsval.append(0)
+        vsini.append(fit[0][0])
+        lld.append(fit[0][1])
+        rv.append(fit[0][2])
+        wcoefs.append(fit[0][3:7])
+        ccoefs.append(fit[0][7:])
+        chisq.append(fit[1])
+
+        chisqarr[obs,jj] = fit[1]
+
+    ##########################
+    ## Save result
+    ##########################
+
+    # make table of best parameters
+    results = Table()
+    results['order'] = orderval
+    results['obs'] = obsval
+    results['chisq'] = chisq
+    results['vsini'] = vsini
+    results['lld'] = lld
+    results['rv'] = rv
+    results['wcoef'] = [f"{wcoef[0]}, {wcoef[1]}, {wcoef[2]}, {wcoef[3]}" for wcoef in wcoefs]
+    results['ccoef'] = [f"{ccoef[0]}, {ccoef[1]}" for ccoef in ccoefs]
+
+    if "BTSettl" in modelpath:
+        resultdir = f"{homedir}/uoedrive/result/CIFIST"
+    if "Callie" in modelpath:
+        resultdir = f"{homedir}/uoedrive/result/Callie"
+    results.write(f'{resultdir}/IGRINS_{target}_{band}_stacked_fitting_results_{modelname[:12]}.txt', format='ascii', overwrite=True)
+    fits.writeto(f'{resultdir}/IGRINS_{target}_{band}_stacked_chipmods_{modelname[:12]}.fits', chipmods, overwrite=True)
+    fits.writeto(f'{resultdir}/IGRINS_{target}_{band}_stacked_chiplams_{modelname[:12]}.fits', chiplams, overwrite=True)
+
+def fit_ownwcoef(target, modelpath, band):
+    """
+    Fit averaged observations, but each obs with own wcoef.
+    """
+
+    if target == "W1049B":
+        ###################################
+        ##  Open IGRINS W1049B data
+        ###################################
+        filelist = sorted(glob.glob(f'{homedir}/uoedrive/data/IGRINS/SDC{band}*_1f.spec.fits'))
+
+        fluxes = []
+        wls = []
+        for filename in filelist:
+            wlname = filename.split('_1f')[0]+'.wave.fits'
+            flux = fits.getdata(filename)
+            wl = fits.getdata(wlname)
+
+            # trim first and last 100 columns
+            flux = flux[:, 100:1948]
+            wl = wl[:, 100:1948]
+            
+            fluxes.append(flux)
+            wls.append(wl)
 
     ###############################
     ## Collapse data over the whole observation into one mean, smoothed spectrum
@@ -54,8 +209,6 @@ def fit(modelpath, band):
     eobs0 /= np.nanmedian(fobs0, 1).reshape(dims[1]-1,1)
     fobs0 /= np.nanmedian(fobs0, 1).reshape(dims[1]-1,1)
     wfobs0 = 1./eobs0**2   # make noise spectrum
-    #ind = np.where(np.isinf(wfobs0)) # set infinite values in noise spectrum to NaNs
-    #wfobs0[ind] = np.nan
     wind = np.isinf(wfobs0)  # remove points with infinite values
     wfobs0[wind] = 0.
 
@@ -63,7 +216,7 @@ def fit(modelpath, band):
     wls = wls[:, 1:24, :] 
 
     ##########################
-    # open model
+    ## Open model
     ##########################
 
     if "BTSettl" in modelpath:
@@ -75,7 +228,10 @@ def fit(modelpath, band):
     if "Callie" in modelpath:
         model = fits.getdata(modelpath)
         modelname = modelpath.split("/")[-1]
-        print(model)
+
+    ##########################
+    ## Fitting model
+    ##########################
 
     # set # of observations and # of orders to process
     nobs = wls.shape[0]
@@ -102,6 +258,7 @@ def fit(modelpath, band):
     chisq = []
 
     for jj in (np.arange(norders)):
+        print(f"Current fitting: model {modelname}, order {jj}.")
         lolim = wls[:, jj, :].min() - 0.003
         hilim = wls[:, jj, :].max() + 0.003
         tind = (model['wl']>lolim) * (model['wl'] < hilim)
@@ -121,7 +278,6 @@ def fit(modelpath, band):
         ind90 = np.sort(fobs0[jj])[int(0.9*npix)]  
         ccoef = np.polyfit(pix[fobs0[jj]>ind90], fobs0[jj][fobs0[jj]>ind90], NPC-1)
         
-        print(jj)
         for obs in np.arange(nobs):
             wcoef = np.polyfit(pix, wls[obs, jj, :], NPW-1)
 
@@ -147,12 +303,15 @@ def fit(modelpath, band):
             vsini.append(fit[0][0])
             lld.append(fit[0][1])
             rv.append(fit[0][2])
-            wcoefs.append(fit[0][3:6])
-            ccoefs.append(fit[0][6:8])
+            wcoefs.append(fit[0][3:7])
+            ccoefs.append(fit[0][7:])
             chisq.append(fit[1])
             
             chisqarr[obs,jj] = fit[1]
 
+    ##########################
+    ## Save result
+    ##########################
 
     # make table of best parameters
     results = Table()
@@ -162,20 +321,20 @@ def fit(modelpath, band):
     results['vsini'] = vsini
     results['lld'] = lld
     results['rv'] = rv
-    results['wcoef'] = f"{wcoefs[0]}, {wcoefs[1]}, {wcoefs[2]}, {wcoefs[3]}"
-    results['ccoef'] = f"{ccoefs[0]}, {ccoefs[1]}"
+    results['wcoef'] = [f"{wcoef[0]}, {wcoef[1]}, {wcoef[2]}, {wcoef[3]}" for wcoef in wcoefs]
+    results['ccoef'] = [f"{ccoef[0]}, {ccoef[1]}" for ccoef in ccoefs]
 
     if "BTSettl" in modelpath:
         resultdir = "result/CIFIST"
     if "Callie" in modelpath:
         resultdir = "result/Callie"
-    results.write(f'{resultdir}/IGRINS_W1049B_{band}_fitting_results_{modelname[:12]}.txt', format='ascii')
+    results.write(f'{resultdir}/IGRINS_W1049B_{band}_fitting_results_{modelname[:12]}.txt', format='ascii', overwrite=True)
     fits.writeto(f'{resultdir}/IGRINS_W1049B_{band}_chipmods_{modelname[:12]}.fits', chipmods, overwrite=True)
     fits.writeto(f'{resultdir}/IGRINS_W1049B_{band}_chiplams_{modelname[:12]}.fits', chiplams, overwrite=True)
 
-def fit_nonstacked(modelpath):
+def fit_nonstack(modelpath):
     """
-    Fit non-stacked observations, but each with specific wcoef.
+    Fit non-averaged observations, each with specific wcoef.
     """
     ###################################
     #  Open data
@@ -263,7 +422,7 @@ def fit_nonstacked(modelpath):
         template = model['flux'][tind]
         template /= np.median(template)
         
-        print(jj)
+        print(f"Current fitting: model {modelname}, order {jj}.")
         for obs in np.arange(nobs):
             wcoef = np.polyfit(pix, wls[obs, jj, :], NPW-1)
             # fit continuum coefficients / flux scaling
@@ -315,7 +474,15 @@ def fit_nonstacked(modelpath):
 
 if __name__ == "__main__":
     try:
-        band = sys.argv[1] # "K" or "H"
+        target = sys.argv[1] # "W1049B" or "2M0036"
+        try: 
+            target in ["W1049B", "2M0036"]
+        except:
+            raise NotImplementedError("Target must be 'W1049B' or '2M0036'.")
+    except:
+        raise NameError("Please provide a target 'W1049B' or '2M0036'.")
+    try:
+        band = sys.argv[2] # "K" or "H"
         try:
             band in ["K", "H"]
         except:
@@ -323,10 +490,15 @@ if __name__ == "__main__":
     except:
         raise NameError("Please provide a band 'K' or 'H'.")
     try:
-        modeldir = sys.argv[2] # e.g. BTSettlModels/CIFIST2015; CallieModels
+        modeldir = sys.argv[3] # e.g. BTSettlModels/CIFIST2015; CallieModels
+        try:
+            os.path.exists(f"{homedir}/uoedrive/data/{modeldir}")
+        except:
+            raise FileNotFoundError(f"Path {homedir}/uoedrive/data/{modeldir} dose not exist.")
     except:
         raise NameError("Please provide a model directory under 'home/uoedrive/data/'.")
-    modellist = sorted(glob.glob(f'{homedir}/uoedrive/data/{modeldir}/*.fits'))
+
+    modellist = sorted(glob.glob(f"{homedir}/uoedrive/data/{modeldir}/*.fits"))
     for model in modellist:
         print(f"***Running fit to model {model}***")
-        fit(modelpath=model, band=band)
+        fit_stacked(target=target, modelpath=model, band=band)
