@@ -21,12 +21,27 @@ def fit_stacked(target, modelpath, band):
     ###################################
 
     if target == "W1049B":
-        # TODO: not yet
-        raise NotImplementedError("Not yet.")
+        filelist = sorted(glob.glob(
+            f'{homedir}/uoedrive/data/IGRINS/SDC{band}*_1f.spec.fits'
+        ))
+        fluxes = []
+        wls = []
+        for filename in filelist:
+            wlname = filename.split('_1f')[0]+'.wave.fits'
+            flux = fits.getdata(filename)
+            wl = fits.getdata(wlname)
+
+            # trim first and last 100 columns
+            flux = flux[:, 100:1948]
+            wl = wl[:, 100:1948]
+            
+            fluxes.append(flux)
+            wls.append(wl)
 
     if target == "2M0036":
-        filelist = sorted(glob.glob(f'{homedir}/uoedrive/data/IGRINS_{target}/SDC{band}*.spec_a0v.fits'))
-
+        filelist = sorted(glob.glob(
+            f'{homedir}/uoedrive/data/IGRINS_{target}/SDC{band}*.spec_a0v.fits'
+        ))
         fluxes = []
         wls = []
         for filename in filelist:
@@ -175,14 +190,16 @@ def fit_ownwcoef(target, modelpath, band):
     Fit averaged observations, but use wcoef guess fitted from each observations, 
     thus Nobs fits per order. Within each order, the difference of those Nobs fits 
     only come from the different wcoef guess used.
+    Deafault mode for now.
     """
+    ###################################
+    ##  Open IGRINS data
+    ###################################
 
     if target == "W1049B":
-        ###################################
-        ##  Open IGRINS W1049B data
-        ###################################
-        filelist = sorted(glob.glob(f'{homedir}/uoedrive/data/IGRINS/SDC{band}*_1f.spec.fits'))
-
+        filelist = sorted(glob.glob(
+            f'{homedir}/uoedrive/data/IGRINS/SDC{band}*_1f.spec.fits'
+        ))
         fluxes = []
         wls = []
         for filename in filelist:
@@ -194,6 +211,24 @@ def fit_ownwcoef(target, modelpath, band):
             flux = flux[:, 100:1948]
             wl = wl[:, 100:1948]
             
+            fluxes.append(flux)
+            wls.append(wl)
+
+    if target == "2M0036":
+        filelist = sorted(glob.glob(
+            f'{homedir}/uoedrive/data/IGRINS_{target}/SDC{band}*.spec_a0v.fits'
+        ))
+        fluxes = []
+        wls = []
+        for filename in filelist:
+            hdu = fits.open(filename)
+            flux = hdu[0].data
+            wl = hdu[1].data
+
+            # trim first and last 100 columns
+            flux = flux[:, 100:1948]
+            wl = wl[:, 100:1948]
+
             fluxes.append(flux)
             wls.append(wl)
 
@@ -246,7 +281,7 @@ def fit_ownwcoef(target, modelpath, band):
     chipfits = []
     chipmods = np.zeros((nobs, norders, npix), dtype=float)
     chiplams = np.zeros((nobs, norders, npix), dtype=float)
-    chipmodnobroad = np.zeros((nobs, norders, npix), dtype=float)
+    #chipmodnobroad = np.zeros((nobs, norders, npix), dtype=float)
     chipguesses = np.zeros((nobs, norders, npix), dtype=float)
     chisqarr = np.zeros((nobs, norders), dtype=float)
 
@@ -285,15 +320,10 @@ def fit_ownwcoef(target, modelpath, band):
             wcoef = np.polyfit(pix, wls[obs, jj, :], NPW-1)
 
             guess = np.concatenate(([21, 0.3, 9e-5], wcoef, ccoef))
-            #mygmod, mygw = fit_atmo.modelspec_tel_template(guess, lam_template, template, lam_atmo, atmo, NPW, NPC, npix, retlam=True)
-
-            thingy = mf.modelspec_template(guess, lam_template, template, NPW, NPC, npix)
-            chipguesses[obs,jj] = thingy
-            #sys.exit()
             fitargs = (mf.modelspec_template, lam_template, template, NPW, NPC, npix, fobs0[jj], wfobs0[jj])
-
-            fit = mf.fmin(mf.errfunc, guess, args=fitargs, full_output=True, disp=True, maxiter=10000, maxfun=100000)
+            fit = mf.fmin(mf.errfunc, guess, args=fitargs, full_output=True, disp=False, maxiter=10000, maxfun=100000)
             print("fitted params:", fit[0])
+            print("chisq:", fit[1])
             mymod, myw = mf.modelspec_template(fit[0], *fitargs[1:-2], retlam=True)
             #mycor = mf.modelspec_tel_template(fit[0], lam_template, np.ones(template.size), *fitargs[3:-2], retlam=False)
             chipfits.append(fit)
@@ -535,4 +565,4 @@ if __name__ == "__main__":
     modellist = sorted(glob.glob(f"{homedir}/uoedrive/data/{modeldir}/*.fits"))
     for model in modellist:
         print(f"***Running fit to model {model}***")
-        fit_nonstack(target=target, modelpath=model, band=band)
+        fit_ownwcoef(target=target, modelpath=model, band=band)
