@@ -358,12 +358,12 @@ def fit_ownwcoef(target, modelpath, band):
     results['ccoef'] = [f"{ccoef[0]}, {ccoef[1]}" for ccoef in ccoefs]
 
     if "BTSettl" in modelpath:
-        resultdir = "result/CIFIST"
+        resultdir = f"{homedir}/uoedrive/result/CIFIST"
     if "Callie" in modelpath:
-        resultdir = "result/Callie"
-    results.write(f'{resultdir}/IGRINS_W1049B_{band}_fitting_results_{modelname[:12]}.txt', format='ascii', overwrite=True)
-    fits.writeto(f'{resultdir}/IGRINS_W1049B_{band}_chipmods_{modelname[:12]}.fits', chipmods, overwrite=True)
-    fits.writeto(f'{resultdir}/IGRINS_W1049B_{band}_chiplams_{modelname[:12]}.fits', chiplams, overwrite=True)
+        resultdir = f"{homedir}/uoedrive/result/Callie"
+    results.write(f'{resultdir}/IGRINS_{target}_{band}_fitting_results_{modelname[:12]}.txt', format='ascii', overwrite=True)
+    fits.writeto(f'{resultdir}/IGRINS_{target}_{band}_chipmods_{modelname[:12]}.fits', chipmods, overwrite=True)
+    fits.writeto(f'{resultdir}/IGRINS_{target}_{band}_chiplams_{modelname[:12]}.fits', chiplams, overwrite=True)
 
 def fit_nonstack(target, modelpath, band):
     """
