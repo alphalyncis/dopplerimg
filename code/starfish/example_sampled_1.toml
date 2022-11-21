@@ -1,9 +1,9 @@
 frozen = [ "logg",]
 
 [parameters]
-vsini = 30.471
-vz = 33.987
-T = 1595.341
+vsini = 27.878
+vz = 104.425
+T = 1489.836
 logg = 5.0
 
 [metadata]
