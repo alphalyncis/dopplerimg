@@ -76,7 +76,8 @@ for i, key in enumerate(model.labels):
 def log_prob(P, priors):
     model.set_param_vector(P)
     return model.log_likelihood(priors)
-def log_prob(theta):
+    
+def log_prob_example(theta):
     t = time.time() + np.random.uniform(0.005, 0.008)
     while True:
         if time.time() >= t:
