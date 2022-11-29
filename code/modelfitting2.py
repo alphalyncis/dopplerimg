@@ -544,7 +544,7 @@ def fmin(func, x0, args=(), kw=dict(),  xtol=1e-4, ftol=1e-4, maxiter=None, maxf
 
     return retlist
 
-def modelspec_template(params, lam_template, template, NPW, NPC, npix, retlam=False):
+def modelspec_template(params, lam_template, template, NPC, npix, retlam=False):
     """
     Return the rotationally-broadened, rv-shifited model spectrum.
 
@@ -559,11 +559,7 @@ def modelspec_template(params, lam_template, template, NPW, NPC, npix, retlam=Fa
 
           [2]: rv of target divided by speed of light, (rv/c)
 
-          [3:3+NPW]: the wavelength solution coefficients. These will
-                     be passed to numpy.polyval with the vector
-                     "arange(npix)/npix"
-
-          [3+NPW:3+NPW+NPC]: the flux normalization
+          [3:3+NPC]: the flux normalization
                      coefficients. These will also be passed to
                      numpy.polyval with the vector "arange(npix)/npix"
 
@@ -574,8 +570,6 @@ def modelspec_template(params, lam_template, template, NPW, NPC, npix, retlam=Fa
                    for this object. Ideally, this will have rather
                    broader coverage, and higher spectral resolution,
                    than the desired model.
-       NPW : int
-         number of polynomial coefficients for wavelength solution.
 
        NPC : int
          number of polynomial coefficients for continuum correction.
@@ -594,12 +588,11 @@ def modelspec_template(params, lam_template, template, NPW, NPC, npix, retlam=Fa
             NPW = 3
             npix = wobs.size
             pix = np.arange(npix, dtype=float)/npix
-            wcoef = np.polyfit(pix, wobs, NPW-1)
             ccoef = [1./np.median(template)]
             NPC = len(ccoef)
-            guess = np.concatenate(([17, 1e-4, 9, 1], wcoef, ccoef))
+            guess = np.concatenate(([17, 1e-4, 9, 1], ccoef))
 
-            mygmod, mygw = fit_atmo.modelspec_tel_template(guess, lam_template, template, lam_atmo, atmo, NPW, NPC, npix, retlam=True)
+            mygmod, mygw = fit_atmo.modelspec_tel_template(guess, lam_template, template, lam_atmo, atmo, NPC, npix, retlam=True)
 
        Things like flux conservation and line-broadening are not
        well-treated in this function!
@@ -607,8 +600,7 @@ def modelspec_template(params, lam_template, template, NPW, NPC, npix, retlam=Fa
     # 2013-05-08 07:38 IJMC: Created
     # 2013-08-06 10:28 IJMC: Updated to use vsini and LLD
     # TODO: example says fit_atmo.modelspec_tel_template?
-    
-    import pdb
+    # 2022-11-29 XQ: remove wcoef as parameter
 
     vsini = params[0]
     lld = params[1]
@@ -617,8 +609,7 @@ def modelspec_template(params, lam_template, template, NPW, NPC, npix, retlam=Fa
     if vsini<0:
         vsini = 0
 
-    wavelength_coefs = params[3:3+NPW]
-    continuum_coefs = params[3+NPW:3+NPW+NPC]
+    continuum_coefs = params[3:3+NPC]
     
     lam_template = np.array(lam_template, copy=False)
     template = np.array(template, copy=False)
@@ -646,16 +637,15 @@ def modelspec_template(params, lam_template, template, NPW, NPC, npix, retlam=Fa
     new_template = np.convolve(template, rotational_profile, 'same')
 
     # Shift template to specified RV & interpolate to wavelength grid
-    #pdb.set_trace()
-    lam = np.polyval(wavelength_coefs, pix)
-    output = np.interp(lam, lam_template*(1.+rv), new_template, left=0., right=0.)
+
+    output = np.interp(lam_template, lam_template*(1.+rv), new_template, left=0., right=0.)
 
     # Multiply by appropriate normalization polynomial
     output *= np.polyval(continuum_coefs, pix)
 
 
     if retlam:
-        ret = (output, lam)
+        ret = (output, lam_template)
     else: 
         ret = output
         
