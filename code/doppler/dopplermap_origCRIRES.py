@@ -27,10 +27,12 @@ import matplotlib.pyplot as plt
 
 import sys
 import pickle
+import os
+homedir = os.path.expanduser('~')
 
 ##############################################################################################
 
-datdir = '/Users/bbiller/Dropbox/Doppler_imaging_code_CRIRES/'
+datdir = f'{homedir}/dopplerimg/code/doppler/'
 
 nlat, nlon = 20, 40
 
