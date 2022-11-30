@@ -71,7 +71,7 @@ model = SpectrumModel(
     cheb=[0, 0],
     global_cov=dict(log_amp=0, log_ls=1),
 )
-model.save(f"{resultdir}/model_created.toml")
+model.save(f"{resultdir}/model_init.toml")
 
 # specify priors
 string = """priors = {
@@ -98,6 +98,8 @@ print("fittable params:", model.labels)  # These are the fittable parameters
 # Numerical optimization before mcmc
 model.train(priors, options={"maxiter": 100})
 model.save(f"{resultdir}/model_optimized.toml")
+model.plot()
+plt.savefig(f"{resultdir}/plot_model.png")
 
 ##############################################################################
 ### Set up mcmc
@@ -150,7 +152,7 @@ autocorr = np.empty(max_n)
 old_tau = np.inf  # will be useful to testing convergence
 
 # Now we'll sample for up to max_n steps
-for sample in sampler.sample(ball, iterations=max_n, progress=True):
+for sample in sampler.sample(ball, iterations=max_n, progress=True, store=True):
     # Only check convergence every 10 steps
     if sampler.iteration % 10:
         continue
@@ -173,7 +175,7 @@ for sample in sampler.sample(ball, iterations=max_n, progress=True):
     old_tau = tau
 
 # After our model has converged, let's take a few extra samples
-sampler.run_mcmc(backend.get_last_sample(), 100, progress=True)
+sampler.run_mcmc(backend.get_last_sample(), 100, progress=True, store=True)
 
 
 ##############################################################################
@@ -184,9 +186,10 @@ reader = emcee.backends.HDFBackend(chain_backend_file)
 full_data = az.from_emcee(reader, var_names=model.labels)
 
 # Plot traces
-az.plot_trace(full_data, figsize=(10,7));
+az.plot_trace(full_data, figsize=(10,7))
 plt.xlabel("step number")
 plt.tight_layout()
+plt.savefig(f"{resultdir}/plot_traces.png")
 
 # Discard burn-in samples
 tau = reader.get_autocorr_time(tol=0)
@@ -203,12 +206,15 @@ burn_data = az.from_dict(dd)
 az.plot_trace(burn_data, figsize=(10,6));
 plt.xlabel("step number")
 plt.tight_layout()
+plt.savefig(f"{resultdir}/plot_traces_burned.png")
 
 # Save summary table
-az.summary(burn_data)
+statistics = az.summary(burn_data)
+statistics.to_csv(f"{resultdir}/statistics.csv")
 
 # Save posterior plot
 az.plot_posterior(burn_data, ["vsini", "vz", "T", "cheb:1", "cheb:2"])
+plt.savefig(f"{resultdir}/plot_posterior.png")
 
 # Save corner plot
 sigmas = ((1 - np.exp(-0.5)), (1 - np.exp(-2)))
@@ -219,10 +225,11 @@ corner.corner(
     levels=sigmas,
     show_titles=True
 )
+plt.savefig(f"{resultdir}/plot_corner.png")
 
 # Save best-fit model
 bestfit_params = dict(az.summary(burn_data)["mean"])
 model.set_param_dict(bestfit_params)
 
-bestfit_plot = model.plot()
-bestfit_plot.save
+model.plot()
+plt.savefig(f"{resultdir}/plot_bestfit_model.png")
