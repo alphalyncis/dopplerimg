@@ -1,0 +1,10 @@
+priors = {
+    "T": st.uniform(1200,1950),
+    "logg": st.uniform(3.0,5.0),
+    "vsini": st.uniform(0, 500),
+    "vz": st.uniform(10, 100),
+    "cheb:1": st.uniform(-3, 6),
+    "cheb:2": st.uniform(-3, 6),
+    "global_cov:log_amp": st.norm(0, 5),
+    "global_cov:log_ls": st.uniform(0, 10),
+}
