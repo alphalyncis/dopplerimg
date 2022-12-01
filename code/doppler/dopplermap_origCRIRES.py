@@ -1,13 +1,8 @@
-
 ######################################################
-
 # Original author: Ian Crossfield (Python 2.7)
 ##################################################
 #2013-08-08 16:13 IJMC: 
 ##################################################
-
-######################################################
-
 
 # import toolkits
 import dia3 as dia
@@ -33,13 +28,9 @@ homedir = os.path.expanduser('~')
 ##############################################################################################
 
 datdir = f'{homedir}/dopplerimg/code/doppler/'
-
 nlat, nlon = 20, 40
 
-"""
-CRIRES-specific parameters
-"""
-
+# CRIRES-specific parameters
 nobs = 14
     
 #W1049B CRIRES
@@ -50,21 +41,17 @@ filename = datdir+'fainterspectral-fits_6.pickle'
 f = open(filename, 'rb')
 ret = pickle.load(f, encoding="latin1")
 
-
 #W1049B CRIRES
 obs1 = ret['obs1']
 chiplams = ret['chiplams']
 chiplams *= 10000 #convert microns to angstroms
 
-
 #W1049B CRIRES
 #the continuum + telluric part of the model. Used to telluric and blaze correct the observations.
-chipcors = ret['chipcors']
+#chipcors = ret['chipcors']
 #The model, but without the line broadening. Used to construct unbroadened DI response matrix. 
 chipmodnobroad = ret['chipmodnobroad']
 
-
-    
 ###
 #object rotation parameters
 ###
@@ -77,7 +64,6 @@ vsini = 29e3 # m/s
 inc = 0.3491 # rad
 
 # Specify user-defined options:
-
 LLD = 1.0
 alpha = 4500
 
@@ -110,7 +96,7 @@ pmod = os.path.split(modelfn)[1].replace('BT-Settl.spec.7.fits', '_dao').replace
 f_linelist   = _mod + pmod + '_edited.clineslsd'
 #f_linelist = _mod + 'btsettl_CRIRES_daospec.clines'  # using new linelist for now
 #f_linelist = _mod + 'btsettl_CRIRES_daospec_refitted.clines'  # using new linelist for now
-f_pspec      = _mod + pmod + '.fits'
+#f_pspec      = _mod + pmod + '.fits'
 f_pspec_cont = _mod + pmod + 'C.fits'
 
 # Load the LSD files:

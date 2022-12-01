@@ -103,7 +103,7 @@ def fit_stacked(target, modelpath, band):
     chipfits = []
     chipmods = np.zeros((nobs, norders, npix), dtype=float)
     chiplams = np.zeros((nobs, norders, npix), dtype=float)
-    #chipmodnobroad = np.zeros((norders, npix), dtype=float)
+    chipmodnobroad = np.zeros((norders, npix), dtype=float)
     chipguesses = np.zeros((nobs, norders, npix), dtype=float)
     chisqarr = np.zeros((nobs, norders, npix), dtype=float)
 
@@ -150,6 +150,11 @@ def fit_stacked(target, modelpath, band):
         chipmods[obs, jj] = mymod
         chiplams[obs, jj] = myw
 
+        # make non-broadened model
+        fit[0][0:2] = 0
+        mymodnobroad = mf.modelspec_template(fit[0], *fitargs[1:-2], retlam=False)
+        chipmodnobroad[jj] = mymodnobroad
+
         # save best parameters
         orderval.append(jj)
         obsval.append(0)
@@ -184,6 +189,7 @@ def fit_stacked(target, modelpath, band):
     results.write(f'{resultdir}/IGRINS_{target}_{band}_stacked_fitting_results_{modelname[:12]}.txt', format='ascii', overwrite=True)
     fits.writeto(f'{resultdir}/IGRINS_{target}_{band}_stacked_chipmods_{modelname[:12]}.fits', chipmods, overwrite=True)
     fits.writeto(f'{resultdir}/IGRINS_{target}_{band}_stacked_chiplams_{modelname[:12]}.fits', chiplams, overwrite=True)
+    fits.writeto(f'{resultdir}/IGRINS_{target}_{band}_stacked_chipmodnobroad_{modelname[:12]}.fits', chipmodnobroad, overwrite=True)
 
 def fit_ownwcoef(target, modelpath, band):
     """
@@ -198,7 +204,7 @@ def fit_ownwcoef(target, modelpath, band):
 
     if target == "W1049B":
         filelist = sorted(glob.glob(
-            f'{homedir}/uoedrive/data/IGRINS/SDC{band}*_1f.spec.fits'
+            f'{homedir}/uoedrive/data/IGRINS_{target}/SDC{band}*_1f.spec.fits'
         ))
         fluxes = []
         wls = []
@@ -281,7 +287,7 @@ def fit_ownwcoef(target, modelpath, band):
     chipfits = []
     chipmods = np.zeros((nobs, norders, npix), dtype=float)
     chiplams = np.zeros((nobs, norders, npix), dtype=float)
-    #chipmodnobroad = np.zeros((nobs, norders, npix), dtype=float)
+    chipmodnobroad = np.zeros((nobs, norders, npix), dtype=float)
     chipguesses = np.zeros((nobs, norders, npix), dtype=float)
     chisqarr = np.zeros((nobs, norders), dtype=float)
 
@@ -325,10 +331,14 @@ def fit_ownwcoef(target, modelpath, band):
             print("fitted params:", fit[0])
             print("chisq:", fit[1])
             mymod, myw = mf.modelspec_template(fit[0], *fitargs[1:-2], retlam=True)
-            #mycor = mf.modelspec_tel_template(fit[0], lam_template, np.ones(template.size), *fitargs[3:-2], retlam=False)
             chipfits.append(fit)
             chipmods[obs,jj] = mymod
             chiplams[obs,jj] = myw
+
+            # make non-broadened model
+            fit[0][0:2] = 0
+            mymodnobroad = mf.modelspec_template(fit[0], *fitargs[1:-2], retlam=False)
+            chipmodnobroad[jj] = mymodnobroad
 
             # save best parameters
             orderval.append(jj)
@@ -364,6 +374,7 @@ def fit_ownwcoef(target, modelpath, band):
     results.write(f'{resultdir}/IGRINS_{target}_{band}_fitting_results_{modelname[:12]}.txt', format='ascii', overwrite=True)
     fits.writeto(f'{resultdir}/IGRINS_{target}_{band}_chipmods_{modelname[:12]}.fits', chipmods, overwrite=True)
     fits.writeto(f'{resultdir}/IGRINS_{target}_{band}_chiplams_{modelname[:12]}.fits', chiplams, overwrite=True)
+    fits.writeto(f'{resultdir}/IGRINS_{target}_{band}_chipmodnobroad_{modelname[:12]}.fits', chipmodnobroad, overwrite=True)
 
 def fit_nonstack(target, modelpath, band):
     """

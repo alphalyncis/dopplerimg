@@ -508,14 +508,14 @@ class map:
 
         kk = 0
         for ii in range(self.nlat): # EB: xrange to range
-            print('ii: '+str(ii))
+            #print('ii: '+str(ii))
             for jj in range(self.nlon): # EB: xrange to range
-                print('jj: '+str(jj))
+                #print('jj: '+str(jj))
                 cell = mapcell()
                 cell.corners = xyz3[:, ii:ii+2, jj:jj+2].reshape(3,4)
                 cell.corners_latlon = np.vstack((theta[ii:ii+2,jj:jj+2].ravel(), phi[ii:ii+2,jj:jj+2].ravel()))
-                print('cell.corners_latlon: ' + str(cell.corners_latlon))
-                print('cell.corners_latlon.T: ' + str(cell.corners_latlon.T))
+                #print('cell.corners_latlon: ' + str(cell.corners_latlon))
+                #print('cell.corners_latlon.T: ' + str(cell.corners_latlon.T))
                 cell.rvcorners = xyz3[1,ii:ii+2,jj:jj+2].ravel() * np.cos(i)
                 cell.get_projected_area(i)
                 cell.get_mu()
