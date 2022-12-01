@@ -251,6 +251,7 @@ def run(target, band, order):
 
     model.plot()
     plt.savefig(f"{resultdir}/plot_bestfit_model.png")
+    model.save(f"{resultdir}/model_bestfit.toml")
 
 if __name__ == "__main__":
     band = "K"
