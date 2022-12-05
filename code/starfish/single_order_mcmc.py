@@ -14,9 +14,11 @@ import scipy.stats as st
 import arviz as az
 import corner
 
-def run(target, band, order):
+def run(target, band, order, suffix=None):
     starfishdir = f"{homedir}/dopplerimg/code/starfish"
     resultdir = f"{starfishdir}/run_IGRINS_{target}_{band}_order{order}"
+    if suffix is not None:
+        resultdir += suffix
     if not os.path.exists(resultdir):
         os.mkdir(resultdir)
     cwd = os.getcwd()
@@ -49,7 +51,6 @@ def run(target, band, order):
     wls = np.array(wls)
 
     obs0 = np.median(fluxes[:, 1:, :], axis=0)*dims[0]  # make mean spectrum
-    eobs0 = np.median(fluxes[:, 1:, :], axis=0)*np.sqrt(dims[0])  
     fobs0 = np.vstack([signal.medfilt(obs0[jj], 3) for jj in range(dims[1]-1)])  # smooth
     # fix wavelength array to have same shape
     wls = wls[:, 1:24, :]
@@ -77,8 +78,8 @@ def run(target, band, order):
 
     # specify priors
     priors = {
-        "T": st.uniform(1200,1950),
-        "logg": st.uniform(3.0,5.0),
+        "T": st.uniform(1200,750),
+        "logg": st.uniform(2.5,3.0),
         "vsini": st.uniform(0, 500),
         "vz": st.uniform(10, 100),
         "cheb:1": st.uniform(-3, 6),
@@ -87,8 +88,8 @@ def run(target, band, order):
         "global_cov:log_ls": st.uniform(0, 10),
     }
     string = """priors = {
-        "T": st.uniform(1200,1950),
-        "logg": st.uniform(3.0,5.0),
+        "T": st.uniform(1200,750),
+        "logg": st.uniform(2.5,3.0),
         "vsini": st.uniform(0, 500),
         "vz": st.uniform(10, 100),
         "cheb:1": st.uniform(-3, 6),
@@ -103,8 +104,8 @@ def run(target, band, order):
 
     # must freeze logg for now otherwise get
     # "ValueError: Querying emulator outside of original parameter range."
-    model.freeze("logg")
-    print("fittable params:", model.labels)  # These are the fittable parameters
+    #model.freeze("logg")
+    #print("fittable params:", model.labels)  # These are the fittable parameters
 
     # Numerical optimization before mcmc
     print("Running numerical optimization...")
@@ -126,21 +127,10 @@ def run(target, band, order):
     ndim = len(model.labels)
 
     # Initialize gaussian ball for starting point of walkers
-    scales = {
-        "T": 1, 
-        #"logg":1, 
-        "vsini": 1, 
-        "vz": 1, 
-        "cheb:1": 1, 
-        "cheb:2":1, 
-        #"global_cov:log_amp":1, 
-        #"global_cov:log_ls":1
-    }
-
     ball = np.random.randn(nwalkers, ndim)
 
     for i, key in enumerate(model.labels):
-        ball[:, i] *= scales[key]
+        ball[:, i] *= model[key]/10 # scale the sigma by 1/10 of param value
         ball[:, i] += model[key]
 
     # our objective to maximize
@@ -211,6 +201,7 @@ def run(target, band, order):
 
     # Discard burn-in samples
     tau = reader.get_autocorr_time(tol=0)
+    print("tau:", tau)
     burnin = int(tau.max())
     thin = int(0.3 * np.min(tau))
     burn_samples = reader.get_chain(discard=burnin, thin=thin)
@@ -231,13 +222,13 @@ def run(target, band, order):
     statistics.to_csv(f"{resultdir}/statistics.csv")
 
     # Save posterior plot
-    az.plot_posterior(burn_data, ["vsini", "vz", "T", "cheb:1", "cheb:2"])
+    az.plot_posterior(burn_data, ["vsini", "vz", "T", "logg", "cheb:1", "cheb:2"])
     plt.savefig(f"{resultdir}/plot_posterior.png")
 
     # Save corner plot
     sigmas = ((1 - np.exp(-0.5)), (1 - np.exp(-2)))
     corner.corner(
-        burn_samples.reshape((-1, 5)),
+        burn_samples.reshape((-1, 6)),
         labels=model.labels,
         quantiles=(0.05, 0.16, 0.84, 0.95),
         levels=sigmas,
