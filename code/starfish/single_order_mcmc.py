@@ -79,7 +79,7 @@ def run(target, band, order, suffix=None):
     # specify priors
     priors = {
         "T": st.uniform(1200,750),
-        "logg": st.uniform(2.5,3.0),
+        "logg": st.uniform(4.5,1.0),
         "vsini": st.uniform(0, 500),
         "vz": st.uniform(10, 100),
         "cheb:1": st.uniform(-3, 6),
@@ -123,7 +123,7 @@ def run(target, band, order, suffix=None):
     ##############################################################################
 
     # Set our walkers and dimensionality
-    nwalkers = 12
+    nwalkers = 15
     ndim = len(model.labels)
 
     # Initialize gaussian ball for starting point of walkers
@@ -150,7 +150,7 @@ def run(target, band, order, suffix=None):
     ##############################################################################
 
     # Start sampler with a max burn-in of 500 samples
-    max_n = 500
+    max_n = 600
 
     # We'll track how the average autocorrelation time estimate changes
     index = 0
@@ -194,16 +194,21 @@ def run(target, band, order, suffix=None):
     full_data = az.from_emcee(reader, var_names=model.labels)
 
     # Plot traces
-    az.plot_trace(full_data, figsize=(10,7))
+    az.plot_trace(full_data, figsize=(10,9))
     plt.xlabel("step number")
     plt.tight_layout()
     plt.savefig(f"{resultdir}/plot_traces.png")
 
     # Discard burn-in samples
-    tau = reader.get_autocorr_time(tol=0)
-    print("tau:", tau)
-    burnin = int(tau.max())
-    thin = int(0.3 * np.min(tau))
+    try:
+        tau = reader.get_autocorr_time(tol=0)
+        print("tau:", tau)
+        burnin = int(tau.max())
+        thin = int(0.3 * np.min(tau))
+    except:
+        print("At least 1 param did not converge")
+        burnin = 100
+        thin = 30
     burn_samples = reader.get_chain(discard=burnin, thin=thin)
     log_prob_samples = reader.get_log_prob(discard=burnin, thin=thin)
     log_prior_samples = reader.get_blobs(discard=burnin, thin=thin)
@@ -212,7 +217,7 @@ def run(target, band, order, suffix=None):
     burn_data = az.from_dict(dd)
 
     # Plot traces after burn-in
-    az.plot_trace(burn_data, figsize=(10,6));
+    az.plot_trace(burn_data, figsize=(10,9));
     plt.xlabel("step number")
     plt.tight_layout()
     plt.savefig(f"{resultdir}/plot_traces_burned.png")
