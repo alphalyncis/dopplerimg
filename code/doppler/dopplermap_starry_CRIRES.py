@@ -10,6 +10,7 @@ from tqdm import tqdm
 from scipy.signal import savgol_filter
 import os
 
+resultdir = 'starry_CRIRES'
 
 # Load the dataset
 with open("fainterspectral-fits_6.pickle", "rb") as f:
@@ -204,7 +205,7 @@ fig, ax = plt.subplots(1, figsize=(5, 5))
 ax.plot(loss)
 ax.set_xlabel("iteration number")
 ax.set_ylabel("loss")
-fig.savefig("luhman16b_loss.pdf", bbox_inches="tight")
+fig.savefig(f"{resultdir}/luhman16b_loss.pdf", bbox_inches="tight")
 
 # Plot the rest frame spectra
 fig, ax = plt.subplots(4, figsize=(18, 10), sharey=True)
@@ -226,7 +227,7 @@ with model:
         ax[c].margins(0, None)
 ax[0].legend(loc="lower left")
 ax[-1].set_xlabel(r"$\lambda$ [nm]", fontsize=16)
-fig.savefig("luhman16b_spectra.pdf", bbox_inches="tight")
+fig.savefig(f"{resultdir}/luhman16b_spectra.pdf", bbox_inches="tight")
 
 # Plot the data & model
 fig, ax = plt.subplots(1, 4, figsize=(16, 10), sharey=True)
@@ -280,7 +281,7 @@ with model:
         ha="center",
         clip_on=False,
     )
-fig.savefig("luhman16b_data_model.pdf", bbox_inches="tight")
+fig.savefig(f"{resultdir}/luhman16b_data_model.pdf", bbox_inches="tight")
 
 # Plot the MAP map
 with model:
@@ -290,7 +291,7 @@ map_map = starry.Map(ydeg, inc=inc_map)
 map_map[:, :] = y_map
 
 # Save the MAP map (just in case we need it later)
-np.savez("luhman16b_map.npz", y_map=y_map, inc_map=inc_map)
+np.savez(f"{resultdir}/luhman16b_map.npz", y_map=y_map, inc_map=inc_map)
 
 # Plot figure similar to that in Crossfield et al. (2014)
 times = np.array([0.0, 0.8, 1.6, 2.4, 3.2, 4.1])
@@ -321,4 +322,4 @@ for n, axis in enumerate(ax):
         ha="center",
         fontsize=15,
     )
-fig.savefig("luhman16b_map.pdf", bbox_inches="tight")
+fig.savefig(f"{resultdir}/luhman16b_map.pdf", bbox_inches="tight")

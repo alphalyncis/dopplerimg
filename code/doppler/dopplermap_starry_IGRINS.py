@@ -9,10 +9,12 @@ import theano.tensor as tt
 from tqdm import tqdm
 from scipy.signal import savgol_filter
 import os
+homedir = os.path.expanduser('~')
 
+resultdir = 'starry_IGRINS'
 
 # Load the dataset
-with open("fainterspectral-fits_6.pickle", "rb") as f:
+with open(f'{homedir}/uoedrive/result/CIFIST/IGRINS_W1049B_K_lte015.0-5.0.pickle', "rb") as f:
     data = pickle.load(f, encoding="latin1")
 
 # Timestamps (from Ian Crossfield)
@@ -39,56 +41,58 @@ t = np.array(
 lams = data["chiplams"][0]
 
 # Interpolate onto that array
-observed = np.empty((14, 4, 1024))
-template = np.empty((14, 4, 1024))
-broadened = np.empty((14, 4, 1024))
-for k in range(14):
-    for c in range(4):
+nobs, nchip, npix = 14, 2, 1848
+observed = np.empty((nobs, nchip, npix))
+template = np.empty((nobs, nchip, npix))
+broadened = np.empty((nobs, nchip, npix))
+fisrtchip=4
+for k in range(nobs):
+    for c in range(nchip):
         observed[k][c] = np.interp(
             lams[c],
-            data["chiplams"][k][c],
-            data["obs1"][k][c] / data["chipcors"][k][c],
+            data["chiplams"][k][c+fisrtchip],
+            data["fobs0"][k][c+fisrtchip] / data["chipcors"][k][c+fisrtchip],
         )
         template[k][c] = np.interp(
             lams[c],
-            data["chiplams"][k][c],
-            data["chipmodnobroad"][k][c] / data["chipcors"][k][c],
+            data["chiplams"][k][c+fisrtchip],
+            data["chipmodnobroad"][k][c+fisrtchip] / data["chipcors"][k][c+fisrtchip],
         )
         broadened[k][c] = np.interp(
             lams[c],
-            data["chiplams"][k][c],
-            data["chipmods"][k][c] / data["chipcors"][k][c],
+            data["chiplams"][k][c+fisrtchip],
+            data["chipmods"][k][c+fisrtchip] / data["chipcors"][k][c+fisrtchip],
         )
 
 # Smooth the data and compute the median error from the MAD
 smoothed = np.array(
-    [savgol_filter(np.mean(observed[:, c], axis=0), 19, 3) for c in range(4)]
+    [savgol_filter(np.mean(observed[:, c], axis=0), 19, 3) for c in range(nchip)]
 )
 resid = observed - smoothed
 error = 1.4826 * np.median(np.abs(resid - np.median(resid)))
 
 # Clip outliers aggressively
-level = 4
-mask = np.abs(resid) < level * error
-mask = np.min(mask, axis=0)
+#level = 4
+#mask = np.abs(resid) < level * error
+#mask = np.min(mask, axis=0)
 
 # Manually clip problematic regions
-mask[0][np.abs(lams[0] - 2.290) < 0.00015] = False
-mask[1][np.abs(lams[1] - 2.310) < 0.0001] = False
-mask[3][np.abs(lams[3] - 2.33845) < 0.0001] = False
-mask[3][np.abs(lams[3] - 2.340) < 0.0004] = False
+#mask[0][np.abs(lams[0] - 2.290) < 0.00015] = False
+#mask[1][np.abs(lams[1] - 2.310) < 0.0001] = False
+#mask[3][np.abs(lams[3] - 2.33845) < 0.0001] = False
+#mask[3][np.abs(lams[3] - 2.340) < 0.0004] = False
 
 # Get the final data arrays
 pad = 100
-wav = [None for n in range(4)]
-wav0 = [None for n in range(4)]
-flux = [None for n in range(4)]
-mean_spectrum = [None for n in range(4)]
-for c in range(4):
-    wav[c] = lams[c][mask[c]][pad:-pad]
-    flux[c] = observed[:, c][:, mask[c]][:, pad:-pad]
-    wav0[c] = lams[c][mask[c]]
-    mean_spectrum[c] = np.mean(template[:, c][:, mask[c]], axis=0)
+wav = [None for n in range(nchip)]
+wav0 = [None for n in range(nchip)]
+flux = [None for n in range(nchip)]
+mean_spectrum = [None for n in range(nchip)]
+for c in range(nchip):
+    wav[c] = lams[c][:][pad:-pad]
+    flux[c] = observed[:, c][:, :][:, pad:-pad]
+    wav0[c] = lams[c][:]
+    mean_spectrum[c] = np.mean(template[:, c][:, :], axis=0)
 
 # Set up a pymc3 model so we can optimize
 with pm.Model() as model:
@@ -124,8 +128,8 @@ with pm.Model() as model:
     y = tt.dot(A, p)
 
     # The spectrum in each channel
-    spectrum = [None for c in range(4)]
-    for c in range(4):
+    spectrum = [None for c in range(nchip)]
+    for c in range(nchip):
         spectrum[c] = pm.Normal(
             f"spectrum{c}",
             mu=mean_spectrum[c],
@@ -140,9 +144,9 @@ with pm.Model() as model:
     offset = pm.Normal("offset", 0.0, 0.1, shape=(4,))
 
     # Compute the model & likelihood for each channel
-    map = [None for c in range(4)]
-    flux_model = [None for c in range(4)]
-    for c in range(4):
+    map = [None for c in range(nchip)]
+    flux_model = [None for c in range(nchip)]
+    for c in range(nchip):
 
         # Instantiate a map
         map[c] = starry.DopplerMap(
@@ -204,12 +208,12 @@ fig, ax = plt.subplots(1, figsize=(5, 5))
 ax.plot(loss)
 ax.set_xlabel("iteration number")
 ax.set_ylabel("loss")
-fig.savefig("luhman16b_loss.pdf", bbox_inches="tight")
+fig.savefig(f"{resultdir}/luhman16b_loss.pdf", bbox_inches="tight")
 
 # Plot the rest frame spectra
-fig, ax = plt.subplots(4, figsize=(18, 10), sharey=True)
+fig, ax = plt.subplots(nchip, figsize=(18, 2*nchip+2), sharey=True)
 with model:
-    for c in range(4):
+    for c in range(nchip):
         # Mask breaks in the spectrum
         # so matplotlib doesn't linearly
         # interpolate
@@ -226,13 +230,13 @@ with model:
         ax[c].margins(0, None)
 ax[0].legend(loc="lower left")
 ax[-1].set_xlabel(r"$\lambda$ [nm]", fontsize=16)
-fig.savefig("luhman16b_spectra.pdf", bbox_inches="tight")
+fig.savefig(f"{resultdir}/luhman16b_spectra.pdf", bbox_inches="tight")
 
 # Plot the data & model
-fig, ax = plt.subplots(1, 4, figsize=(16, 10), sharey=True)
+fig, ax = plt.subplots(1, nchip, figsize=(16, 2*nchip+2), sharey=True)
 fig.subplots_adjust(wspace=0.1)
 with model:
-    for c in range(4):
+    for c in range(nchip):
         # Mask breaks in the spectrum
         # so matplotlib doesn't linearly
         # interpolate
@@ -251,7 +255,7 @@ with model:
                 "C1-",
             )
     # Appearance hacks
-    for c in range(4):
+    for c in range(nchip):
         if c > 0:
             ax[c].get_yaxis().set_visible(False)
         ax[c].spines["left"].set_visible(False)
@@ -280,7 +284,7 @@ with model:
         ha="center",
         clip_on=False,
     )
-fig.savefig("luhman16b_data_model.pdf", bbox_inches="tight")
+fig.savefig(f"{resultdir}/luhman16b_data_model.pdf", bbox_inches="tight")
 
 # Plot the MAP map
 with model:
@@ -290,7 +294,7 @@ map_map = starry.Map(ydeg, inc=inc_map)
 map_map[:, :] = y_map
 
 # Save the MAP map (just in case we need it later)
-np.savez("luhman16b_map.npz", y_map=y_map, inc_map=inc_map)
+np.savez(f"{resultdir}/luhman16b_map.npz", y_map=y_map, inc_map=inc_map)
 
 # Plot figure similar to that in Crossfield et al. (2014)
 times = np.array([0.0, 0.8, 1.6, 2.4, 3.2, 4.1])
@@ -321,4 +325,4 @@ for n, axis in enumerate(ax):
         ha="center",
         fontsize=15,
     )
-fig.savefig("luhman16b_map.pdf", bbox_inches="tight")
+fig.savefig(f"{resultdir}/luhman16b_map.pdf", bbox_inches="tight")
