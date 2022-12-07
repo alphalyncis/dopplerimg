@@ -5,6 +5,7 @@ This module contains functions for fitting a model spectrum with data using down
 import numpy as np
 from numpy import sum, array, sqrt, exp, max
 import pdb
+import matplotlib.pyplot as plt
 
 from numpy import where as find
 
@@ -704,7 +705,6 @@ def rotationalProfile(delta_epsilon, delta_lam):
         lamdel2 = 1. - ((delta_lam - delta_epsilon[2])/delta_lambda_L)**2
     else:
         lamdel2 = 1. - (delta_lam/delta_lambda_L)**2
-    
     if not hasattr(delta_lam, '__iter__'):
         delta_lam = np.array([delta_lam])
 
@@ -830,7 +830,6 @@ def modelspec_tel_template(params, lam_template, template, lam_atmo, atmo, NPW, 
     # Create model-convolution Kernel and convolve template:
     pixsize_ms = np.diff(lam_template).mean()/lam_template.mean() * const.c
     xkern = np.arange(-int(1200.*vsini/pixsize_ms), int(1200.*vsini/pixsize_ms)+1)
-
     
     if xkern.size>=template.size:
         xkern = np.arange(-template.size/2, template.size/2)
@@ -843,8 +842,9 @@ def modelspec_tel_template(params, lam_template, template, lam_atmo, atmo, NPW, 
         rotational_profile /= rotational_profile.sum()
         #kern = gaussian([1., fwhm/2.3548, 0, 0], xkern)
         #kern /= kern.sum()
-    
+
     new_template = np.convolve(template, rotational_profile, 'same')
+    print(new_template)
 
     # Create telluric-convolution Kernel and convolve scaled telluric spectrum:
     new_atmo = 1.0 - atmo_scale*(1.0 - atmo)
@@ -863,8 +863,17 @@ def modelspec_tel_template(params, lam_template, template, lam_atmo, atmo, NPW, 
 
     # Shift template to specified RV & interpolate to wavelength grid
     #pdb.set_trace()
+    print(pix)
+    print(wavelength_coefs)
     lam = np.polyval(wavelength_coefs, pix)
     new_template = np.interp(lam, lam_template*(1.+rv), new_template, left=0., right=0.)
+    print(np.interp(lam, lam_atmo, new_atmo, left=0., right=0.))
+    print(lam)
+    print(lam_atmo)
+    print(new_atmo)
+    plt.figure(figsize=(25,3))
+    plt.plot(lam_atmo, new_atmo)
+    plt.plot(lam, np.interp(lam, lam_atmo, new_atmo, left=0., right=0.))
     output = new_template * np.interp(lam, lam_atmo, new_atmo, left=0., right=0.)
 
     # Multiply by appropriate normalization polynomial

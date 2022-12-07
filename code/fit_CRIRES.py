@@ -31,14 +31,8 @@ def fit_nonstack_telluric(target, modelpath, telluricpath, band):
     ## Collapse data over the whole observation into one mean, smoothed spectrum
     ###############################
     nobs = 14
-    obs0 = ret['obs0']*14.
-    eobs0 = ret['obs0']*np.sqrt(14.)
-    fobs0 = np.array([[signal.medfilt(obs0[kk,jj], 3) for jj in range(4)] for kk in range(nobs)])
-    eobs0 /= np.median(fobs0, axis=2).reshape(nobs, 4,1)
-    fobs0 /= np.median(fobs0, axis=2).reshape(nobs, 4,1)
-    wfobs0 = 1./eobs0**2
-    wind = np.isinf(wfobs0)
-    wfobs0[wind] = 0.
+    obs1 = ret['obs1']
+    wobs0 = ret['wobs0']
 
     ##########################
     ## Open model
@@ -86,7 +80,7 @@ def fit_nonstack_telluric(target, modelpath, telluricpath, band):
     for kk in range(nobs):
         chipfits = []
         for jj in range(4):
-            print(f"Current fitting: model {modelname}, order {jj}.")
+            print(f"Current fitting: model {modelname}, obs{kk}, order {jj}.")
             lolim = ret['wobs'][jj].min() - 0.003
             hilim = ret['wobs'][jj].max() + 0.003
             tind = (model['wl']>lolim) * (model['wl'] < hilim)
@@ -98,20 +92,21 @@ def fit_nonstack_telluric(target, modelpath, telluricpath, band):
 
             lam_atmo = atm0[aind, 0]
             atmo = atm0[aind, 1]
+            '''
             if kk==0 and jj==0:
                 plt.figure(figsize=(10,4))
                 plt.plot(lam_template, template)
                 plt.plot(lam_atmo, atmo)
-                plt.plot(ret['wobs'][jj], fobs0[kk, jj])
+                plt.plot(ret['wobs'][jj], obs1[kk, jj])'''
             wcoef = np.polyfit(pix, ret['wobs'][jj], NPW-1)
             ccoef = [-0.1, 1.2/np.median(template)]
             NPC = len(ccoef)
-            ind90 = np.sort(fobs0[kk, jj])[int(0.9*npix)]  
-            ccoef = np.polyfit(pix[fobs0[kk, jj]>ind90], fobs0[kk, jj][fobs0[kk, jj]>ind90], NPC-1)
+            ind90 = np.sort(obs1[kk, jj])[int(0.9*npix)]  
+            ccoef = np.polyfit(pix[obs1[kk, jj]>ind90], obs1[kk, jj][obs1[kk, jj]>ind90], NPC-1)
 
             # start fit
-            guess = np.concatenate(([21, 0.3, 9e-5, 42, 1.3], wcoef, ccoef))
-            fitargs = (mf.modelspec_tel_template, lam_template, template, lam_atmo, atmo, NPW, NPC, npix, fobs0[kk, jj], wfobs0[kk, jj])  # with telluric correction
+            guess = np.concatenate(([25, 0.3, 9e-5, 30, 1.3], wcoef, ccoef))
+            fitargs = (mf.modelspec_tel_template, lam_template, template, lam_atmo, atmo, NPW, NPC, npix, obs1[kk, jj], wobs0[kk, jj])  # with telluric correction
             fit = mf.fmin(mf.errfunc, guess, args=fitargs, full_output=True, disp=False, maxiter=10000, maxfun=100000)
             mymod, myw = mf.modelspec_tel_template(fit[0], *fitargs[1:-2], retlam=True)
             mycor = mf.modelspec_tel_template(fit[0], lam_template, np.ones(template.size), *fitargs[3:-2], retlam=False)
@@ -135,7 +130,7 @@ def fit_nonstack_telluric(target, modelpath, telluricpath, band):
 
             # make non-broadened model
             fit[0][0:2] = 0
-            mymodnobroad = mf.modelspec_tel_template(fit[0], *fitargs[1:-2], retlam=False)
+            mymodnobroad = mf.modelspec_tel_template(fit[0], *fitargs[1:-2])
             chipmodnobroad[kk, jj] = mymodnobroad
 
         individual_fits.append(chipfits)
@@ -167,7 +162,7 @@ def fit_nonstack_telluric(target, modelpath, telluricpath, band):
     fits.writeto(f'{resultdir}/CRIRES_{target}_{band}_nonstack_chipcors_{modelname[:12]}.fits', chipcors, overwrite=True)
 
     # save to pickle
-    saveout = dict(chipmods=chipmods, chiplams=chiplams, chipcors=chipcors, obs0=obs0, modelfn=modelname, individual_fits=individual_fits, chipmodnobroad=chipmodnobroad)
+    saveout = dict(chipmods=chipmods, chiplams=chiplams, chipcors=chipcors, obs1=obs1, wobs0=wobs0, wobs=ret['wobs'], modelfn=modelname, individual_fits=individual_fits, chipmodnobroad=chipmodnobroad)
     with open(f'{resultdir}/CRIRES_{target}_{band}_{modelname[:12]}.pickle', 'wb') as f:
         pickle.dump(saveout, f)
 
