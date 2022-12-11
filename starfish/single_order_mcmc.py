@@ -15,7 +15,7 @@ import arviz as az
 import corner
 
 def run(target, band, order, suffix=None, test=False):
-    starfishdir = f"{homedir}/dopplerimg/code/starfish"
+    starfishdir = f"{homedir}/dopplerimg/starfish"
     resultdir = f"{starfishdir}/run_IGRINS_{target}_{band}_order{order}"
     if suffix is not None:
         resultdir += suffix
@@ -272,4 +272,13 @@ if __name__ == "__main__":
         order = int(sys.argv[1]) 
     except:
         raise NameError("Must provide an order number to fit (start from 0)")
-    run(target=target, band=band, order=order, suffix="_test_vz30", test=True)
+    try:
+        testflag = sys.argv[2]
+        if testflag == "test":
+            test = True
+        else:
+            test = False
+    except:
+        testflag = ''
+        test = False
+    run(target=target, band=band, order=order, suffix=f"_{testflag}_vz30", test=test)

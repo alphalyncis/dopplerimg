@@ -9,7 +9,7 @@ logg = 5.0
 [metadata]
 name = "SpectrumModel"
 data = "Spectrum"
-emulator = "/home/xchen/dopplerimg/code/starfish/BTSettl_K_emu"
+emulator = "/home/xchen/dopplerimg/starfish/BTSettl_K_emu"
 
 [parameters.global_cov]
 log_amp = 0
