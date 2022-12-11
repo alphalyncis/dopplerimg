@@ -1,0 +1,20 @@
+frozen = [ "global_cov", "global_cov:log_amp", "global_cov:log_ls",]
+
+[parameters]
+vsini = 25.014
+vz = 107.386
+T = 1515.433
+logg = 5.06
+
+[metadata]
+name = "SpectrumModel"
+data = "Spectrum"
+emulator = "/home/xchen/dopplerimg/code/starfish/BTSettl_K_emu"
+
+[parameters.global_cov]
+log_amp = 0.0011132198126746226
+log_ls = 0.46295669704238035
+
+[parameters.cheb]
+1 = -0.058
+2 = -0.116
