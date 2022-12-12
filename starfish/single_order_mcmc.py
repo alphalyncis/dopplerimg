@@ -28,58 +28,55 @@ def run(target, band, order, suffix=None, test=False):
     ##############################################################################
     ### Open data
     ##############################################################################
-    if not test:
-        print(f"Data path is {homedir}/uoedrive/data/IGRINS_{target}/SDC{band}*, order{order}")
-        filelist = sorted(glob.glob(f'{homedir}/uoedrive/data/IGRINS_{target}/SDC{band}*_1f.spec.fits'))
-        if len(filelist) == 0:
-            raise FileNotFoundError("Please check your data path.")
-        fluxes = []
-        wls = []
+    print(f"Data path is {homedir}/uoedrive/data/IGRINS_{target}/SDC{band}*, order{order}")
+    filelist = sorted(glob.glob(f'{homedir}/uoedrive/data/IGRINS_{target}/SDC{band}*_1f.spec.fits'))
+    if len(filelist) == 0:
+        raise FileNotFoundError("Please check your data path.")
+    fluxes = []
+    wls = []
 
-        for filename in filelist:
-            wlname = filename.split('_1f')[0]+'.wave.fits'
+    for filename in filelist:
+        wlname = filename.split('_1f')[0]+'.wave.fits'
 
-            flux = fits.getdata(filename)
-            wl = fits.getdata(wlname)
-            # trim first and last 100 columns
-            flux = flux[:, 100:1948]
-            wl = wl[:, 100:1948]
-            
-            fluxes.append(flux)
-            wls.append(wl)
-        dims = np.array(fluxes).shape
-        fluxes = np.array(fluxes)
-        wls = np.array(wls)
+        flux = fits.getdata(filename)
+        wl = fits.getdata(wlname)
+        # trim first and last 100 columns
+        flux = flux[:, 100:1948]
+        wl = wl[:, 100:1948]
+        
+        fluxes.append(flux)
+        wls.append(wl)
+    dims = np.array(fluxes).shape
+    fluxes = np.array(fluxes)
+    wls = np.array(wls)
 
-        obs0 = np.median(fluxes[:, 1:, :], axis=0)*dims[0]  # make mean spectrum
-        fobs0 = np.vstack([signal.medfilt(obs0[jj], 3) for jj in range(dims[1]-1)])  # smooth
-        # fix wavelength array to have same shape
-        wls = wls[:, 1:24, :]
+    obs0 = np.median(fluxes[:, 1:, :], axis=0)*dims[0]  # make mean spectrum
+    fobs0 = np.vstack([signal.medfilt(obs0[jj], 3) for jj in range(dims[1]-1)])  # smooth
+    # fix wavelength array to have same shape
+    wls = wls[:, 1:24, :]
 
-    else:
+    if test:
         # use Callie's models as synthetic spectra
         modelpath = f"{homedir}/uoedrive/data/CallieModels/t1500g1000f8_m0.0_co1.0.fits"
         model = fits.getdata(modelpath)
         print(f"Testing synthetic spectrum {modelpath}")
-        lolim = 2.15
-        hilim = 2.19
+        lolim = 1.9
+        hilim = 2.5
         tind = (model['wl']>lolim) * (model['wl'] < hilim)
         lam_template = model['wl'][tind]
         template = model['flux'][tind]
         template /= np.median(template)
-
 
     ##############################################################################
     ### Create Starfish Model
     ##############################################################################
 
     # Create data spectrum
-    if not test:
-        wl_order = wls[22, order, :] *10000   # take the wl points of obs=22
-        flux_order = fobs0[order]
-        data = Spectrum(wl_order, flux_order, sigmas=None, masks=None, name="Spectrum")
-    else:
-        data = Spectrum(lam_template, template, sigmas=None, masks=None, name="Spectrum")
+    wl_order = wls[22, order, :]   # take the wl points of obs=22
+    flux_order = fobs0[order]
+    if test:
+        flux_order = np.interp(wl_order, lam_template, template)
+    data = Spectrum(wl_order*10000, flux_order, sigmas=None, masks=None, name="Spectrum")
 
     # Create model spectrum
     model = SpectrumModel(
