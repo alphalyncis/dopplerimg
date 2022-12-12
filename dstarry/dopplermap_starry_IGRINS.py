@@ -11,9 +11,9 @@ from scipy.signal import savgol_filter
 import os
 homedir = os.path.expanduser('~')
 
-resultdir = 'starry_IGRINS/orderall_nocors_'
-fisrtchip = 0
+firstchip = 0
 nobs, nchip, npix = 14, 20, 1848
+resultdir = f'starry_IGRINS/order{firstchip}+{nchip}_nocors_'
 
 # Load the dataset
 with open(f'{homedir}/uoedrive/result/CIFIST/IGRINS_W1049B_K_lte015.0-5.0.pickle', "rb") as f:
@@ -49,19 +49,19 @@ broadened = np.empty((nobs, nchip, npix))
 for k in range(nobs):
     for c in range(nchip):
         observed[k][c] = np.interp(
-            lams[c],
-            data["chiplams"][k][c+fisrtchip],
-            data["fobs0"][k][c+fisrtchip] #/ data["chipcors"][k][c+fisrtchip],
+            lams[c+firstchip],
+            data["chiplams"][k][c+firstchip],
+            data["fobs0"][k][c+firstchip] #/ data["chipcors"][k][c+firstchip],
         )
         template[k][c] = np.interp(
-            lams[c],
-            data["chiplams"][k][c+fisrtchip],
-            data["chipmodnobroad"][k][c+fisrtchip] #/ data["chipcors"][k][c+fisrtchip],
+            lams[c+firstchip],
+            data["chiplams"][k][c+firstchip],
+            data["chipmodnobroad"][k][c+firstchip] #/ data["chipcors"][k][c+firstchip],
         )
         broadened[k][c] = np.interp(
-            lams[c],
-            data["chiplams"][k][c+fisrtchip],
-            data["chipmods"][k][c+fisrtchip] #/ data["chipcors"][k][c+fisrtchip],
+            lams[c+firstchip],
+            data["chiplams"][k][c+firstchip],
+            data["chipmods"][k][c+firstchip] #/ data["chipcors"][k][c+firstchip],
         )
 
 # Smooth the data and compute the median error from the MAD
@@ -72,9 +72,9 @@ resid = observed - smoothed
 error = 1.4826 * np.median(np.abs(resid - np.median(resid)))
 
 # Clip outliers aggressively
-#level = 4
-#mask = np.abs(resid) < level * error
-#mask = np.min(mask, axis=0)
+level = 4
+mask = np.abs(resid) < level * error
+mask = np.min(mask, axis=0)
 
 # Manually clip problematic regions
 #mask[0][np.abs(lams[0] - 2.290) < 0.00015] = False
@@ -218,36 +218,8 @@ with model:
 map_map = starry.Map(ydeg, inc=inc_map)
 map_map[:, :] = y_map
 
-# Save the MAP map (just in case we need it later)
-#np.savez(f"{resultdir}luhman16b_map.npz", y_map=y_map, inc_map=inc_map)
+map_map.show(projection="moll", colorbar=True)
+map_map.show(projection="moll", colorbar=True, file=f"{resultdir}luhman16b_map.png")
 
-# Plot figure similar to that in Crossfield et al. (2014)
-times = np.array([0.0, 0.8, 1.6, 2.4, 3.2, 4.1])
-thetas = 360 * times / period
-fig = plt.figure(figsize=(8, 8))
-f = 1 / 0.64
-ax = [
-    plt.axes([0.3225 * f, 0.34 * f, 0.3125, 0.3125]),
-    plt.axes([0.44 * f, 0.17 * f, 0.3125, 0.3125]),
-    plt.axes([0.3225 * f, 0.0, 0.3125, 0.3125]),
-    plt.axes([0.1175 * f, 0.0, 0.3125, 0.3125]),
-    plt.axes([0.0, 0.17 * f, 0.3125, 0.3125]),
-    plt.axes([0.1175 * f, 0.34 * f, 0.3125, 0.3125]),
-]
-norm = Normalize(vmin=0.45, vmax=0.56)
-for n, axis in enumerate(ax):
-    map_map.show(ax=axis, theta=thetas[n], cmap="gist_heat", norm=norm)
-    axis.invert_yaxis()
-    axis.invert_xaxis()
-    angle = np.pi / 3 * (1 - n)
-    plt.annotate(
-        "{:.1f} hr".format(times[n]),
-        xy=(0.515, 0.43),
-        xycoords="figure fraction",
-        xytext=(80 * np.cos(angle), 65 * np.sin(angle)),
-        textcoords="offset points",
-        va="center",
-        ha="center",
-        fontsize=15,
-    )
-fig.savefig(f"{resultdir}luhman16b_map.png", bbox_inches="tight")
+# Save the MAP map (just in case we need it later)
+np.savez(f"{resultdir}luhman16b_map.npz", y_map=y_map, inc_map=inc_map)
