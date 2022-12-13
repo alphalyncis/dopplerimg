@@ -18,15 +18,16 @@ import os
 homedir = os.path.expanduser('~')
 
 nlat, nlon = 20, 40
-datdir = f'{homedir}/workspace/dopplerimg/code/doppler/'
-suffix = 'order1-5'
+datdir = f'{homedir}/dopplerimg/doppler/'
 nobs = 14
-nchips = 5
-firstchip = 1
+nchips = 2
+firstchip = 4
+suffix = f'order{firstchip}+{nchips}_nocors'
 
 with open(f'{homedir}/uoedrive/result/CIFIST/IGRINS_W1049B_K_lte015.0-5.0.pickle', 'rb') as f:
     ret = pickle.load(f, encoding="latin1")
-obs1 = ret['fobs0']
+obs1 = ret['fobs0'] # filtered normalized obs (nobs, nchips, npix)
+#obs1 = ret['chipmods'] # for testing
 chiplams = ret['chiplams']
 chiplams *= 10000 #convert microns to angstroms
 chipmodnobroad = ret['chipmodnobroad']
@@ -84,12 +85,19 @@ modkerns = np.zeros((nobs, nchips, nk), dtype=float)
 for i, jj in enumerate(range(firstchip, firstchip+nchips)): # EB: chip 4,5
     for kk in range(nobs): # EB: frame 0-13
         # EB: create delta-function line spectrum from wavelength grid, list of line locations, list of equivalent widths
-        deltaspec = ns.linespec(lineloc*(1.+8e-5), lineew, chiplams[:,jj].mean(0), verbose=False, cont=spline(chiplams[:,jj].mean(0)))
-        # lines shifted to rv by 1+9e-5
+        rv = ret["individual_fits"][kk][jj][0][2] # get specific rv fitted for this spectrum
+        deltaspec = ns.linespec(lineloc*(1.+rv), lineew, chiplams[:,jj].mean(0), verbose=False, cont=spline(chiplams[:,jj].mean(0)))
+        # lines shifted to rv
 
         # EB: DSA=Difference Spectral Analysis. Match given spectra to reference spectra
-        m,kerns[kk,i],b,c = dia.dsa(deltaspec, obs1[kk,jj]/chipcors[kk,jj], nk)
-        m,modkerns[kk,i],b,c = dia.dsa(deltaspec, chipmodnobroad[kk,jj]/chipcors[kk,jj], nk)    
+        m,kerns[kk,i],b,c = dia.dsa(
+            deltaspec, 
+            obs1[kk,jj]#/chipcors[kk,jj]
+            ,nk)
+        m,modkerns[kk,i],b,c = dia.dsa(
+            deltaspec, 
+            chipmodnobroad[kk,jj]#/chipcors[kk,jj]
+            ,nk)    
 		#EB: dia.dsa returns: Response matrix, kernel used in convolution, background offset, chisquared of fit
 		#EB: only the kernels are used from here on   
 
