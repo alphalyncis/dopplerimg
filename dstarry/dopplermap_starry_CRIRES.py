@@ -10,7 +10,7 @@ from tqdm import tqdm
 from scipy.signal import savgol_filter
 import os
 
-resultdir = 'starry_CRIRES'
+resultdir = 'starry_CRIRES/'
 
 # Load the dataset
 with open("fainterspectral-fits_6.pickle", "rb") as f:
@@ -290,6 +290,10 @@ with model:
 map_map = starry.Map(ydeg, inc=inc_map)
 map_map[:, :] = y_map
 
+map_map.show(projection="moll", colorbar=True)
+map_map.show(projection="moll", colorbar=True, file=f"{resultdir}luhman16b_map.png")
+
+
 # Save the MAP map (just in case we need it later)
 np.savez(f"{resultdir}/luhman16b_map.npz", y_map=y_map, inc_map=inc_map)
 
@@ -322,4 +326,4 @@ for n, axis in enumerate(ax):
         ha="center",
         fontsize=15,
     )
-fig.savefig(f"{resultdir}/luhman16b_map.png", bbox_inches="tight")
+fig.savefig(f"{resultdir}/CRIRES_luhman16b_map_orig.png", bbox_inches="tight")

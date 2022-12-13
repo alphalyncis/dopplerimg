@@ -11,9 +11,14 @@ from scipy.signal import savgol_filter
 import os
 homedir = os.path.expanduser('~')
 
-firstchip = 0
-nobs, nchip, npix = 14, 20, 1848
-resultdir = f'starry_IGRINS/order{firstchip}+{nchip}_nocors_'
+test = False
+if test:
+    testflag="test_"
+else:
+    testflag=""
+firstchip = 4
+nobs, nchip, npix = 14, 2, 1848
+resultdir = f'starry_IGRINS/{testflag}order{firstchip}+{nchip}_nocors_'
 
 # Load the dataset
 with open(f'{homedir}/uoedrive/result/CIFIST/IGRINS_W1049B_K_lte015.0-5.0.pickle', "rb") as f:
@@ -58,11 +63,17 @@ for k in range(nobs):
             data["chiplams"][k][c+firstchip],
             data["chipmodnobroad"][k][c+firstchip] #/ data["chipcors"][k][c+firstchip],
         )
-        broadened[k][c] = np.interp(
+        if test:
+            observed[k][c] = np.interp(
             lams[c+firstchip],
             data["chiplams"][k][c+firstchip],
-            data["chipmods"][k][c+firstchip] #/ data["chipcors"][k][c+firstchip],
-        )
+            data["chipmods"][0][c+firstchip] #/ data["chipcors"][0][c+firstchip],
+            )
+            template[k][c] = np.interp(
+            lams[c+firstchip],
+            data["chiplams"][k][c+firstchip],
+            data["chipmodnobroad"][0][c+firstchip] #/ data["chipcors"][0][c+firstchip],
+            )
 
 # Smooth the data and compute the median error from the MAD
 smoothed = np.array(
@@ -92,7 +103,7 @@ for c in range(nchip):
     wav[c] = lams[c][:][pad:-pad]
     flux[c] = observed[:, c][:, :][:, pad:-pad]
     wav0[c] = lams[c][:]
-    mean_spectrum[c] = np.mean(template[:, c][:, :], axis=0)
+    mean_spectrum[c] = np.mean(template[:, c][:, :], axis=0) # obs-averaged nobroad modelspec
 
 # Set up a pymc3 model so we can optimize
 with pm.Model() as model:
@@ -132,8 +143,8 @@ with pm.Model() as model:
     for c in range(nchip):
         spectrum[c] = pm.Normal(
             f"spectrum{c}",
-            mu=mean_spectrum[c],
-            sd=spectrum_sigma,
+            mu=mean_spectrum[c], # the obs-avged chipmodnobroad is used as prior for spectrum
+            sd=spectrum_sigma, 
             shape=mean_spectrum[c].shape,
         )
 
@@ -223,3 +234,41 @@ map_map.show(projection="moll", colorbar=True, file=f"{resultdir}luhman16b_map.p
 
 # Save the MAP map (just in case we need it later)
 np.savez(f"{resultdir}luhman16b_map.npz", y_map=y_map, inc_map=inc_map)
+
+
+
+'''
+# To plot the other way:
+oldmap = np.load('starry_IGRINS/order0+20_nocors_luhman16b_map.npz')
+y_map = oldmap['y_map']
+inc_map = oldmap['inc_map']
+map_map = starry.Map(ydeg, inc=inc_map)
+map_map[:, :] = y_map
+times = np.array([0.0, 0.8, 1.6, 2.4, 3.2, 4.1])
+thetas = 360 * times / period
+fig = plt.figure(figsize=(8, 8))
+f = 1 / 0.64
+ax = [
+    plt.axes([0.3225 * f, 0.34 * f, 0.3125, 0.3125]),
+    plt.axes([0.44 * f, 0.17 * f, 0.3125, 0.3125]),
+    plt.axes([0.3225 * f, 0.0, 0.3125, 0.3125]),
+    plt.axes([0.1175 * f, 0.0, 0.3125, 0.3125]),
+    plt.axes([0.0, 0.17 * f, 0.3125, 0.3125]),
+    plt.axes([0.1175 * f, 0.34 * f, 0.3125, 0.3125]),
+]
+for n, axis in enumerate(ax):
+    map_map.show(ax=axis, theta=thetas[n])
+    axis.invert_yaxis()
+    axis.invert_xaxis()
+    angle = np.pi / 3 * (1 - n)
+    plt.annotate(
+        "{:.1f} hr".format(times[n]),
+        xy=(0.515, 0.43),
+        xycoords="figure fraction",
+        xytext=(80 * np.cos(angle), 65 * np.sin(angle)),
+        textcoords="offset points",
+        va="center",
+        ha="center",
+        fontsize=15,
+    )
+'''
