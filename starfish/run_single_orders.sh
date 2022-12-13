@@ -1,3 +1,3 @@
 #!/bin/bash
-nohup python single_order_mcmc.py 6 test
-nohup python single_order_mcmc.py 12
+python single_order_mcmc.py 6 test
+#python single_order_mcmc.py 12

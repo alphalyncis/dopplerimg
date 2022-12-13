@@ -4,6 +4,7 @@ import numpy as np
 from scipy import signal
 import glob
 from astropy.table import Table
+import modelfitting as mf
 import os
 import sys
 homedir = os.path.expanduser('~')
@@ -54,6 +55,8 @@ def run(target, band, order, suffix=None, test=False):
     fobs0 = np.vstack([signal.medfilt(obs0[jj], 3) for jj in range(dims[1]-1)])  # smooth
     # fix wavelength array to have same shape
     wls = wls[:, 1:24, :]
+    wl_order = wls[22, order, :]   # take the wl points of obs=22
+    flux_order = fobs0[order]
 
     if test:
         # use Callie's models as synthetic spectra
@@ -67,15 +70,25 @@ def run(target, band, order, suffix=None, test=False):
         template = model['flux'][tind]
         template /= np.median(template)
 
+        npix = 1848
+        NPW = 4
+        pix = np.arange(npix, dtype=float)/npix
+        wcoef = np.polyfit(pix, wls[0, order, :], NPW-1)
+        ccoef = [-0.1, 1.2/np.median(template)]
+        NPC = len(ccoef)
+        ind90 = np.sort(fobs0[order])[int(0.9*npix)]  
+        ccoef = np.polyfit(pix[fobs0[order]>ind90], fobs0[order][fobs0[order]>ind90], NPC-1)
+        params = [30, 0.9, 20] + list(wcoef) + list(ccoef)
+        mymod = mf.modelspec_template(params, lam_template, template, NPW, NPC, npix, retlam=False)
+        flux_order = mymod
+        # flux_order = np.interp(wl_order, lam_template, template)
     ##############################################################################
     ### Create Starfish Model
     ##############################################################################
 
-    # Create data spectrum
-    wl_order = wls[22, order, :]   # take the wl points of obs=22
-    flux_order = fobs0[order]
-    if test:
-        flux_order = np.interp(wl_order, lam_template, template)
+    if len(flux_order) == 0:
+        raise ValueError("some problem with spectrum data")
+        
     data = Spectrum(wl_order*10000, flux_order, sigmas=None, masks=None, name="Spectrum")
 
     # Create model spectrum
