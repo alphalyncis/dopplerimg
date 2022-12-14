@@ -22,7 +22,7 @@ datdir = f'{homedir}/dopplerimg/doppler/'
 nobs = 14
 nchips = 2
 firstchip = 4
-suffix = f'order{firstchip}+{nchips}_nocors'
+suffix = f'testchipmod_order{firstchip}+{nchips}_nocors_'
 
 with open(f'{homedir}/uoedrive/result/CIFIST/IGRINS_W1049B_K_lte015.0-5.0.pickle', 'rb') as f:
     ret = pickle.load(f, encoding="latin1")
@@ -86,16 +86,18 @@ for i, jj in enumerate(range(firstchip, firstchip+nchips)): # EB: chip 4,5
     for kk in range(nobs): # EB: frame 0-13
         # EB: create delta-function line spectrum from wavelength grid, list of line locations, list of equivalent widths
         rv = ret["individual_fits"][kk][jj][0][2] # get specific rv fitted for this spectrum
-        deltaspec = ns.linespec(lineloc*(1.+rv), lineew, chiplams[:,jj].mean(0), verbose=False, cont=spline(chiplams[:,jj].mean(0)))
+        deltaspec = ns.linespec(lineloc*(1.+6e-5), lineew, chiplams[:,jj].mean(0), verbose=False, cont=spline(chiplams[:,jj].mean(0)))
         # lines shifted to rv
 
         # EB: DSA=Difference Spectral Analysis. Match given spectra to reference spectra
         m,kerns[kk,i],b,c = dia.dsa(
             deltaspec, 
-            obs1[kk,jj]#/chipcors[kk,jj]
+            #obs1[kk,jj]#/chipcors[kk,jj]
+            chipmods[kk,jj]#/chipcors[kk,jj]
             ,nk)
         m,modkerns[kk,i],b,c = dia.dsa(
             deltaspec, 
+            #chipmodnobroad[kk,jj]#/chipcors[kk,jj]
             chipmodnobroad[kk,jj]#/chipcors[kk,jj]
             ,nk)    
 		#EB: dia.dsa returns: Response matrix, kernel used in convolution, background offset, chisquared of fit
@@ -116,7 +118,7 @@ kerns = np.array([[np.interp(np.arange(nk), np.arange(nk) - systematic_rv_offset
 # Prepare the Doppler Imaging "response matrix"
 ######################################################################################
 
-modIP = 1. - np.concatenate((np.zeros(300), intrinsic_profile, np.zeros(300)))
+modIP = 1. - np.concatenate((np.zeros(300), intrinsic_profile, np.zeros(300)))  # modIP is the line intensity I_lam in Vogt 1987
 modDV = - np.arange(np.floor(-modIP.size/2.+.5), np.floor(modIP.size/2.+.5)) * dbeta * an.c / 1e3
 flineSpline2 = interpolate.UnivariateSpline(modDV[::-1], modIP[::-1], k=1., s=0.)
 
@@ -127,7 +129,7 @@ for ii in range(nobs): # EB: frame 0-13
     i0, i1 = ii*nk, (ii+1)*nk # EB: nk is the number of pixels in LSD computation on this run through
     inds = np.concatenate((np.arange(i0, i0+7), np.arange(i1-7, i1)))
     continuumfit = np.polyfit(inds, observation_norm[inds], 1)
-    observation_norm[i0:i1] /= np.polyval(continuumfit, np.arange(i0, i1))
+    observation_norm[i0:i1] /= np.polyval(continuumfit, np.arange(i0, i1)) 
 plt.figure(figsize=(8,1.5))
 plt.plot(observation)
 plt.plot(observation_norm)
@@ -160,7 +162,7 @@ for kk, rot in enumerate(phase):
 	this_doppler = 1. + vsini*this_map.visible_rvcorners.mean(1)/an.c/np.cos(inc)
 	good = (this_map.projected_area>0) * np.isfinite(this_doppler)
 	for ii in good.nonzero()[0]:
-		speccube[ii,:] = flineSpline2(dv + (this_doppler[ii]-1)*an.c/1000.)
+		speccube[ii,:] = flineSpline2(dv + (this_doppler[ii]-1)*an.c/1000.)  # shift modIP by rv of the zone due to rotation
 		#speccube[ii,:] = flineSpline(lamdv / this_doppler[ii])
 	limbdarkening = (1. - LLD) + LLD * this_map.mu
 	Rblock = speccube * ((limbdarkening*this_map.projected_area).reshape(this_map.ncell, 1)*np.pi/this_map.projected_area.sum())
