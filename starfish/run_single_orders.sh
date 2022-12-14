@@ -1,3 +1,2 @@
 #!/bin/bash
-python single_order_mcmc.py 6
-#python single_order_mcmc.py 12
+python single_order_mcmc.py 12

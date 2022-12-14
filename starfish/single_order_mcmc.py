@@ -158,7 +158,7 @@ def run(target, band, order, suffix=None, test=False):
     ball = np.random.randn(nwalkers, ndim)
 
     for i, key in enumerate(model.labels):
-        ball[:, i] *= model[key]/10 # scale the sigma by 1/10 of param value
+        ball[:, i] *= model[key]/20 # scale the sigma by 1/10 of param value
         ball[:, i] += model[key]
 
     # our objective to maximize
@@ -211,7 +211,7 @@ def run(target, band, order, suffix=None, test=False):
 
     # After our model has converged, let's take a few extra samples
     print("Running mcmc samples...")
-    sampler.run_mcmc(backend.get_last_sample(), 100, progress=True, store=True)
+    sampler.run_mcmc(backend.get_last_sample(), 500, progress=True, store=True)
 
 
     ##############################################################################
