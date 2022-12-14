@@ -52,7 +52,7 @@ def run(target, band, order, suffix=None, test=False):
     wls = np.array(wls)
 
     obs0 = np.median(fluxes[:, 1:, :], axis=0)*dims[0]  # make mean spectrum
-    fobs0 = np.vstack([signal.medfilt(obs0[jj], 3) for jj in range(dims[1]-1)])  # smooth
+    fobs0 = np.vstack([signal.medfilt(obs0[jj], 5) for jj in range(dims[1]-1)])  # smooth
     # fix wavelength array to have same shape
     wls = wls[:, 1:24, :]
     wl_order = wls[22, order, :]   # take the wl points of obs=22
