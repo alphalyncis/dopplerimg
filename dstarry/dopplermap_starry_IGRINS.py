@@ -11,9 +11,9 @@ from scipy.signal import savgol_filter
 import os
 homedir = os.path.expanduser('~')
 
-test = False
+test = True
 if test:
-    testflag="test_"
+    testflag="testones_"
 else:
     testflag=""
 firstchip = 4
@@ -67,12 +67,12 @@ for k in range(nobs):
             observed[k][c] = np.interp(
             lams[c+firstchip],
             data["chiplams"][k][c+firstchip],
-            data["chipmods"][0][c+firstchip] #/ data["chipcors"][0][c+firstchip],
+            np.ones(data["chipmods"][6][c+firstchip].size) #/ data["chipcors"][0][c+firstchip],
             )
             template[k][c] = np.interp(
             lams[c+firstchip],
             data["chiplams"][k][c+firstchip],
-            data["chipmodnobroad"][0][c+firstchip] #/ data["chipcors"][0][c+firstchip],
+            data["chipmodnobroad"][k][c+firstchip] #/ data["chipcors"][0][c+firstchip],
             )
 
 # Smooth the data and compute the median error from the MAD
@@ -104,6 +104,14 @@ for c in range(nchip):
     flux[c] = observed[:, c][:, :][:, pad:-pad]
     wav0[c] = lams[c][:]
     mean_spectrum[c] = np.mean(template[:, c][:, :], axis=0) # obs-averaged nobroad modelspec
+
+plt.figure(figsize=(14,4))
+k = 6
+for c in nchip:
+    plt.plot(lams[c], observed[k,c,:], color="tab:blue", label="observed")
+    plt.plot(lams[c], template[k,c,:], color="tab:orange", label="template")
+    plt.plot(lams[c], resid[k,c,:], color="tab:green", label="error")
+plt.legend()
 
 # Set up a pymc3 model so we can optimize
 with pm.Model() as model:
