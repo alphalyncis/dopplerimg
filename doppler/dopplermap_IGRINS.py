@@ -7,24 +7,25 @@ import dime3 as dime # Doppler Imaging & Maximum Entropy
 
 # import packages
 import numpy as np
-from scipy import signal
 import os
 from scipy import interpolate
 from astropy.io import fits
 import matplotlib.pyplot as plt
 import pickle
-import glob
 import os
 homedir = os.path.expanduser('~')
+
+##############################################################################################
 
 nlat, nlon = 20, 40
 datdir = f'{homedir}/dopplerimg/doppler/'
 nobs = 14
 nchips = 2
 firstchip = 4
-suffix = f'testchipmod_order{firstchip}+{nchips}_nocors_'
+suffix = f'testfixedobs_order{firstchip}+{nchips}_nocors_'
 
-with open(f'{homedir}/uoedrive/result/CIFIST/IGRINS_W1049B_K_lte015.0-5.0.pickle', 'rb') as f:
+filename = f'{homedir}/uoedrive/result/CIFIST/IGRINS_W1049B_K_lte015.0-5.0.pickle'
+with open(filename, 'rb') as f:
     ret = pickle.load(f, encoding="latin1")
 obs1 = ret['fobs0'] # filtered normalized obs (nobs, nchips, npix)
 #obs1 = ret['chipmods'] # for testing
@@ -92,8 +93,8 @@ for i, jj in enumerate(range(firstchip, firstchip+nchips)): # EB: chip 4,5
         # EB: DSA=Difference Spectral Analysis. Match given spectra to reference spectra
         m,kerns[kk,i],b,c = dia.dsa(
             deltaspec, 
-            #obs1[kk,jj]#/chipcors[kk,jj]
-            chipmods[kk,jj]#/chipcors[kk,jj]
+            obs1[kk,jj]#/chipcors[kk,jj]
+            #chipcors[kk,jj]#/chipcors[kk,jj]
             ,nk)
         m,modkerns[kk,i],b,c = dia.dsa(
             deltaspec, 
@@ -102,6 +103,13 @@ for i, jj in enumerate(range(firstchip, firstchip+nchips)): # EB: chip 4,5
             ,nk)    
 		#EB: dia.dsa returns: Response matrix, kernel used in convolution, background offset, chisquared of fit
 		#EB: only the kernels are used from here on   
+
+plt.figure(figsize=(15,4))
+for jj in range(nchips):
+    plt.plot(chiplams[:,jj].mean(0), obs1[kk,jj], color="tab:blue", linewidth=1, label="obs")
+    plt.plot(chiplams[:,jj].mean(0), chipmodnobroad[kk,jj], color="tab:orange", linewidth=1, label="nobroad")
+    plt.plot(chiplams[:,jj].mean(0), deltaspec/np.median(deltaspec), color="tab:green", linewidth=0.5, label="lines")
+plt.legend(loc=2, bbox_to_anchor=(1, 1))
 
 # Compute LSD velocity grid:
 dbeta = np.diff(chiplams).mean()/chiplams.mean() # EB: np.diff returns array containing the difference between elements of the array provided. so dbeta will be mean difference/mean value.
@@ -151,7 +159,9 @@ latlon_corners = np.array([c.corners_latlon for c in mmap.cells]) #corner coordi
 phi_corner = latlon_corners[:,1,:]
 theta_corner = latlon_corners[:,0,:]
 
-
+###################################################################################
+# Compute the "Response Matrix" of Vogt 1987:
+###################################################################################
 
 Rmatrix = np.zeros((ncell, nobs*dv.size), dtype=np.float32) 
 

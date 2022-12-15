@@ -107,7 +107,7 @@ for c in range(nchip):
 
 plt.figure(figsize=(14,4))
 k = 6
-for c in nchip:
+for c in range(nchip):
     plt.plot(lams[c], observed[k,c,:], color="tab:blue", label="observed")
     plt.plot(lams[c], template[k,c,:], color="tab:orange", label="template")
     plt.plot(lams[c], resid[k,c,:], color="tab:green", label="error")
