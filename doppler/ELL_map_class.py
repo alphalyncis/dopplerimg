@@ -415,7 +415,7 @@ class mapcell:
             if not (np.isfinite(visible_corners)).all():
                 self.visible_corners = self.corners * np.nan
                 area = 0
-                print( "Non-finite projected corners; need to fix this.") # EB updated print statement
+                #print( "Non-finite projected corners; need to fix this.") # EB updated print statement
             else:
                 self.visible_corners = visible_corners
 

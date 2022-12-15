@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import os
 homedir = os.path.expanduser('~')
 
-def fit_nonstack_telluric(target, modelpath, telluricpath, band):
+def fit_binned_telluric(target, modelpath, telluricpath, band):
     """
     Fit averaged observations with the same guess for wcoef (fitted using wl of first/avg order) 
     for all observations, i.e., one fit per order.
@@ -182,4 +182,4 @@ if __name__ == "__main__":
     modellist = sorted(glob.glob(f"{homedir}/uoedrive/data/{modeldir}/*.fits"))
     for model in modellist:
         print(f"***Running fit to model {model}***")
-        fit_nonstack_telluric(target=target, modelpath=model, telluricpath=telluric, band=band)
+        fit_binned_telluric(target=target, modelpath=model, telluricpath=telluric, band=band)

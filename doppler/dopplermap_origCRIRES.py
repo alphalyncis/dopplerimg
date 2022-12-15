@@ -17,27 +17,25 @@ import numpy as np
 import os
 from scipy import interpolate
 from astropy.io import fits
-
 import matplotlib.pyplot as plt
-
-import sys
 import pickle
 import os
 homedir = os.path.expanduser('~')
 
 ##############################################################################################
 
-datdir = './'
 nlat, nlon = 20, 40
-
-# CRIRES-specific parameters
+datdir = f'{homedir}/dopplerimg/doppler/'
 nobs = 14
+nchips = 4
+firstchip = 0
+suffix = f'testfixedobs_order{firstchip}+{nchips}'
     
 #W1049B CRIRES
-chips = np.array([0,1,2,3]) #for crires data set
-nchips = 4
+#chips = np.array([0,1,2,3]) #for crires data set
 
 filename = datdir+'fainterspectral-fits_6.pickle'
+#filename = f'{homedir}/uoedrive/result/CIFIST/CRIRES_W1049B_K_lte015.0-5.0.pickle'
 f = open(filename, 'rb')
 ret = pickle.load(f, encoding="latin1")
 
@@ -45,6 +43,7 @@ ret = pickle.load(f, encoding="latin1")
 obs1 = ret['obs1']
 chiplams = ret['chiplams']
 chiplams *= 10000 #convert microns to angstroms
+chipmods = ret["chipmods"]
 
 #W1049B CRIRES
 #the continuum + telluric part of the model. Used to telluric and blaze correct the observations.
@@ -56,7 +55,7 @@ chipmodnobroad = ret['chipmodnobroad']
 #object rotation parameters
 ###
 
-#W1049B
+# W1049B rotation parameters
 #set period and number of observations
 period = 4.87 # period in hours
 per = period*3600 # period in seconds
@@ -66,10 +65,8 @@ inc = 0.3491 # rad
 # Specify user-defined options:
 LLD = 1.0
 alpha = 4500
-
 nk = 103 # parameter for LSD
 ftol = 0.01 # tolerance for convergence of maximum-entropy
-
 nstep = 1500
 
 ##################################################
@@ -94,9 +91,6 @@ modelfn = _mod+ 'lte015-5.0-0.0a+0.0.BT-Settl.spec.7.fits'  #EB change file name
 
 pmod = os.path.split(modelfn)[1].replace('BT-Settl.spec.7.fits', '_dao').replace('.',',')
 f_linelist   = _mod + pmod + '_edited.clineslsd'
-#f_linelist = _mod + 'btsettl_CRIRES_daospec.clines'  # using new linelist for now
-#f_linelist = _mod + 'btsettl_CRIRES_daospec_refitted.clines'  # using new linelist for now
-#f_pspec      = _mod + pmod + '.fits'
 f_pspec_cont = _mod + pmod + 'C.fits'
 
 # Load the LSD files:
@@ -111,28 +105,38 @@ kerns = np.zeros((nobs, nchips, nk), dtype=float)
 modkerns = np.zeros((nobs, nchips, nk), dtype=float)
   
 ### In this scheme, run LSD separately for each frame's wavelength solution:
-for jj in range(nchips): # EB: chip 0-3
+for i, jj in enumerate(range(firstchip, firstchip+nchips)): # EB: chip 0-3
     for kk in range(nobs): # EB: frame 0-13
         deltaspec = ns.linespec(lineloc*(1.+9e-5), lineew, chiplams[:,jj].mean(0), verbose=False, cont=spline(chiplams[:,jj].mean(0))) # EB: create delta-function line spectrum from wavelength grid, list of line locations, list of equivalent widths
-        m,kerns[kk,jj],b,c = dia.dsa(deltaspec, obs1[kk,jj]/chipcors[kk,jj], nk)    # EB: DSA=Difference Spectral Analysis. Match given spectra to reference spectra
-        m,modkerns[kk,jj],b,c = dia.dsa(deltaspec, chipmodnobroad[kk,jj]/chipcors[kk,jj], nk)    
+        m,kerns[kk,i],b,c = dia.dsa(
+            deltaspec, 
+            obs1[kk,jj]/chipcors[kk,jj], 
+            #chipcors[kk,jj],
+            nk)    # EB: DSA=Difference Spectral Analysis. Match given spectra to reference spectra
+        m,modkerns[kk,i],b,c = dia.dsa(
+            deltaspec, 
+            chipmodnobroad[kk,jj]/chipcors[kk,jj], 
+            nk)    
 			#EB: dia.dsa returns: Response matrix, kernel used in convolution, background offset, chisquared of fit
 			#EB: only the kernels are used from here on        
+
+plt.figure(figsize=(15,4))
+for jj in range(nchips):
+    plt.plot(chiplams[:,jj].mean(0), obs1[kk,jj], color="tab:blue", linewidth=1, label="obs")
+    plt.plot(chiplams[:,jj].mean(0), chipmodnobroad[kk,jj], color="tab:orange", linewidth=1, label="nobroad")
+    plt.plot(chiplams[:,jj].mean(0), deltaspec/np.median(deltaspec), color="tab:green", linewidth=0.5, label="lines")
+plt.legend(loc=2, bbox_to_anchor=(1, 1))
 
 # Compute LSD velocity grid:
 dbeta = np.diff(chiplams).mean()/chiplams.mean() # EB: np.diff returns array containing the difference between elements of the array provided. so dbeta will be mean difference/mean value.
 dx = -dbeta * np.arange(np.floor(-nk/2.+.5), np.floor(nk/2.+.5)) # EB: edit np.arange
 dv = an.c*dx / 1e3 # km/s # EB: an.c is the speed of light
 
-
-intrinsic_profile = modkerns[:,chips].mean(0).mean(0)
+intrinsic_profile = modkerns[:,:].mean(0).mean(0)
 intrinsic_profile -= intrinsic_profile[0] + (intrinsic_profile[-1] - intrinsic_profile[0])/(nk - 1.) * np.arange(nk)
 systematic_rv_offset = (intrinsic_profile==intrinsic_profile.max()).nonzero()[0] - (dv==0).nonzero()[0]
 intrinsic_profile = np.interp(np.arange(nk), np.arange(nk) - systematic_rv_offset, intrinsic_profile)
-kerns = np.array([[np.interp(np.arange(nk), np.arange(nk) - systematic_rv_offset, kerns[jj, kk]) for kk in chips] for jj in range(nobs)])
-
-
-#sys.exit()
+kerns = np.array([[np.interp(np.arange(nk), np.arange(nk) - systematic_rv_offset, kerns[jj, kk]) for kk in range(nchips)] for jj in range(nobs)])
 
 ###################################################################################
 # Prepare the Doppler Imaging "response matrix"
@@ -142,8 +146,7 @@ modIP = 1. - np.concatenate((np.zeros(300), intrinsic_profile, np.zeros(300)))
 modDV = - np.arange(np.floor(-modIP.size/2.+.5), np.floor(modIP.size/2.+.5)) * dbeta * an.c / 1e3
 flineSpline2 = interpolate.UnivariateSpline(modDV[::-1], modIP[::-1], k=1., s=0.) 
 	
-
-observation = 1. - kerns[:,chips].mean(1).ravel()
+observation = 1. - kerns.mean(1).ravel()
 observation_norm = observation.copy()
 for ii in range(nobs): # EB: frame 0-13
     i0, i1 = ii*nk, (ii+1)*nk # EB: nk is the number of pixels in LSD computation on this run through
@@ -162,11 +165,9 @@ dime.setup(observation_norm.size, nk)
 flatguess = 100*np.ones(nx)
 bounds = [(1e-6, 300)]*nx
 
-    
 allfits = []
 
 #initialize Doppler map object
-
 mmap = ELL_map.map(nlat=nlat, nlon=nlon, i=inc) #ELL_map.map returns a class object 
 ncell = mmap.ncell
 latlon_corners = np.array([c.corners_latlon for c in mmap.cells]) #corner coordinates
@@ -197,7 +198,7 @@ flatmodel = dime.normalize_model(np.dot(flatguess, Rmatrix), nk)
 if len(allfits)==0:  # Properly scale measurement weights:
     minfm = flatmodel.min()
     cutoffval = 1. - (1. - minfm) / 22.
-    w_observation = (flatmodel < cutoffval).astype(float) / np.median(kerns[:,chips].mean(1).std(0))**2
+    w_observation = (flatmodel < cutoffval).astype(float) / np.median(kerns.mean(1).std(0))**2
         # Scale the observations to match the model's equivalent width:
     out, eout = an.lsq((observation_norm, np.ones(nobs*nk)), flatmodel, w=w_observation)
     sc_observation_norm = observation_norm * out[0] + out[1]
@@ -217,21 +218,17 @@ metric, chisq, entropy = dime.entropy_map_norm_sp(bestparams, *fitargs, retvals=
 # reshape into grid
 bestparamgrid = np.reshape(bestparams, (-1, nlon))
 
-fits.writeto('map_CRIRES_4chips_25Nov22.fits', bestparamgrid, overwrite=True)
+fits.writeto(f'map_CRIRES_{suffix}.fits', bestparamgrid, overwrite=True)
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='mollweide')
-
 lon = np.linspace(-np.pi, np.pi, nlon)
 lat = np.linspace(-np.pi/2., np.pi/2., nlat)
 Lon,Lat = np.meshgrid(lon,lat)
-
 im = ax.pcolormesh(Lon,Lat,bestparamgrid, cmap=plt.cm.plasma)
 fig.colorbar(im)
-
 plt.show()
-
-fig.savefig('map_WISE1049B_CRIRES_25Nov22.png')
+fig.savefig(f'map_CRIRES_{suffix}.png')
 
     
     
