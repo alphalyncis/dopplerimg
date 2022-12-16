@@ -13,11 +13,14 @@ homedir = os.path.expanduser('~')
 
 test = True
 if test:
-    testflag="testones_"
+    testflag="testfixed_"
 else:
     testflag=""
 firstchip = 4
 nobs, nchip, npix = 14, 2, 1848
+chips = range(firstchip, firstchip+nchip)
+#nchip, chips = 10, range(0,20,2) # even chips
+#nchip, chips = 10, range(1, 20, 2) # odd chips
 resultdir = f'starry_IGRINS/{testflag}order{firstchip}+{nchip}_nocors_'
 
 # Load the dataset
@@ -52,27 +55,27 @@ observed = np.empty((nobs, nchip, npix))
 template = np.empty((nobs, nchip, npix))
 broadened = np.empty((nobs, nchip, npix))
 for k in range(nobs):
-    for c in range(nchip):
-        observed[k][c] = np.interp(
-            lams[c+firstchip],
-            data["chiplams"][k][c+firstchip],
-            data["fobs0"][k][c+firstchip] #/ data["chipcors"][k][c+firstchip],
+    for i, c in enumerate(chips):
+        observed[k][i] = np.interp(
+            lams[c],
+            data["chiplams"][k][c],
+            data["fobs0"][k][c] #/ data["chipcors"][k][c],
         )
-        template[k][c] = np.interp(
-            lams[c+firstchip],
-            data["chiplams"][k][c+firstchip],
-            data["chipmodnobroad"][k][c+firstchip] #/ data["chipcors"][k][c+firstchip],
+        template[k][i] = np.interp(
+            lams[c],
+            data["chiplams"][k][c],
+            data["chipmodnobroad"][k][c] #/ data["chipcors"][k][c],
         )
         if test:
-            observed[k][c] = np.interp(
-            lams[c+firstchip],
-            data["chiplams"][k][c+firstchip],
-            np.ones(data["chipmods"][6][c+firstchip].size) #/ data["chipcors"][0][c+firstchip],
+            observed[k][i] = np.interp(
+            lams[c],
+            data["chiplams"][k][c],
+            1 / data["chipcors"][k][c],
             )
-            template[k][c] = np.interp(
-            lams[c+firstchip],
-            data["chiplams"][k][c+firstchip],
-            data["chipmodnobroad"][k][c+firstchip] #/ data["chipcors"][0][c+firstchip],
+            template[k][i] = np.interp(
+            lams[c],
+            data["chiplams"][k][c],
+            data["chipmodnobroad"][k][c] / data["chipcors"][k][c],
             )
 
 # Smooth the data and compute the median error from the MAD
@@ -107,10 +110,10 @@ for c in range(nchip):
 
 plt.figure(figsize=(14,4))
 k = 6
-for c in range(nchip):
-    plt.plot(lams[c], observed[k,c,:], color="tab:blue", label="observed")
-    plt.plot(lams[c], template[k,c,:], color="tab:orange", label="template")
-    plt.plot(lams[c], resid[k,c,:], color="tab:green", label="error")
+for i, c in enumerate(chips):
+    plt.plot(lams[c], observed[k,i,:], color="tab:blue", label="observed")
+    plt.plot(lams[c], template[k,i,:], color="tab:orange", label="template")
+    plt.plot(lams[c], resid[k,i,:], color="tab:green", label="error")
 plt.legend()
 
 # Set up a pymc3 model so we can optimize

@@ -27,15 +27,15 @@ homedir = os.path.expanduser('~')
 nlat, nlon = 20, 40
 datdir = f'{homedir}/dopplerimg/doppler/'
 nobs = 14
-nchips = 4
-firstchip = 0
-suffix = f'testfixedobs_order{firstchip}+{nchips}'
+nchips = 1
+firstchip = 3
+suffix = f'testfixedobs_order{firstchip}+{nchips}_'
     
 #W1049B CRIRES
 #chips = np.array([0,1,2,3]) #for crires data set
 
 filename = datdir+'fainterspectral-fits_6.pickle'
-#filename = f'{homedir}/uoedrive/result/CIFIST/CRIRES_W1049B_K_lte015.0-5.0.pickle'
+filename = f'{homedir}/uoedrive/result/CIFIST/CRIRES_W1049B_K_lte015.0-5.0.pickle'
 f = open(filename, 'rb')
 ret = pickle.load(f, encoding="latin1")
 
@@ -109,14 +109,14 @@ for i, jj in enumerate(range(firstchip, firstchip+nchips)): # EB: chip 0-3
     for kk in range(nobs): # EB: frame 0-13
         deltaspec = ns.linespec(lineloc*(1.+9e-5), lineew, chiplams[:,jj].mean(0), verbose=False, cont=spline(chiplams[:,jj].mean(0))) # EB: create delta-function line spectrum from wavelength grid, list of line locations, list of equivalent widths
         m,kerns[kk,i],b,c = dia.dsa(
-            deltaspec, 
-            obs1[kk,jj]/chipcors[kk,jj], 
+            deltaspec,
+            obs1[kk,jj]/chipcors[kk,jj],
             #chipcors[kk,jj],
             nk)    # EB: DSA=Difference Spectral Analysis. Match given spectra to reference spectra
         m,modkerns[kk,i],b,c = dia.dsa(
-            deltaspec, 
-            chipmodnobroad[kk,jj]/chipcors[kk,jj], 
-            nk)    
+            deltaspec,
+            chipmodnobroad[kk,jj]/chipcors[kk,jj],
+            nk)
 			#EB: dia.dsa returns: Response matrix, kernel used in convolution, background offset, chisquared of fit
 			#EB: only the kernels are used from here on        
 

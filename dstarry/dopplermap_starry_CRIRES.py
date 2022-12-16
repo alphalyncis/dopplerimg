@@ -10,13 +10,13 @@ from tqdm import tqdm
 from scipy.signal import savgol_filter
 import os
 
-test = False
+test = True
 if test:
-    testflag="testones_"
+    testflag="testfixed_"
 else:
     testflag=""
-firstchip = 3
-nobs, nchip, npix = 14, 1, 1024
+firstchip = 0
+nobs, nchip, npix = 14, 4, 1024
 resultdir = f'starry_CRIRES/{testflag}order{firstchip}+{nchip}_nocors_'
 
 # Load the dataset
@@ -65,12 +65,12 @@ for k in range(nobs):
             observed[k][c] = np.interp(
             lams[c+firstchip],
             data["chiplams"][k][c+firstchip],
-            data["chipmods"][6][c+firstchip] / data["chipcors"][0][c+firstchip],
+            data["obs1"][6][c+firstchip] / data["chipcors"][k][c+firstchip],
             )
             template[k][c] = np.interp(
             lams[c+firstchip],
             data["chiplams"][k][c+firstchip],
-            data["chipmodnobroad"][k][c+firstchip] / data["chipcors"][0][c+firstchip],
+            data["chipmodnobroad"][k][c+firstchip] / data["chipcors"][k][c+firstchip],
             )
 
 # Smooth the data and compute the median error from the MAD
