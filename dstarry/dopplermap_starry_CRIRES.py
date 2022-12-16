@@ -65,7 +65,7 @@ for k in range(nobs):
             observed[k][c] = np.interp(
             lams[c+firstchip],
             data["chiplams"][k][c+firstchip],
-            data["obs1"][6][c+firstchip] / data["chipcors"][k][c+firstchip],
+            data["obs1"][6][c+firstchip] / data["chipcors"][6][c+firstchip],
             )
             template[k][c] = np.interp(
             lams[c+firstchip],

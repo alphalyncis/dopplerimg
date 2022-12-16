@@ -11,7 +11,7 @@ from scipy.signal import savgol_filter
 import os
 homedir = os.path.expanduser('~')
 
-test = True
+test = False
 if test:
     testflag="testfixed_"
 else:
@@ -70,12 +70,12 @@ for k in range(nobs):
             observed[k][i] = np.interp(
             lams[c],
             data["chiplams"][k][c],
-            1 / data["chipcors"][k][c],
+            data["chipcors"][6][c],
             )
             template[k][i] = np.interp(
             lams[c],
             data["chiplams"][k][c],
-            data["chipmodnobroad"][k][c] / data["chipcors"][k][c],
+            data["chipcors"][k][c],
             )
 
 # Smooth the data and compute the median error from the MAD
@@ -108,13 +108,24 @@ for c in range(nchip):
     wav0[c] = lams[c][:]
     mean_spectrum[c] = np.mean(template[:, c][:, :], axis=0) # obs-averaged nobroad modelspec
 
-plt.figure(figsize=(14,4))
+from astropy.io import fits
+telluricfile = f"{homedir}/uoedrive/data/telluric/transdata_0,5-14_mic_hires.fits"
+atm0 = fits.getdata(telluricfile)
+lolim=2.29
+hilim=2.36
+aind = (atm0[:, 0]>lolim) * (atm0[:, 0] < hilim)
+lam_atmo = atm0[aind, 0]
+atmo = atm0[aind, 1]
+
+plt.figure(figsize=(20,4))
 k = 6
 for i, c in enumerate(chips):
     plt.plot(lams[c], observed[k,i,:], color="tab:blue", label="observed")
-    plt.plot(lams[c], template[k,i,:], color="tab:orange", label="template")
-    plt.plot(lams[c], resid[k,i,:], color="tab:green", label="error")
-plt.legend()
+    plt.plot(lams[c], template[k,i,:], color="tab:orange", linewidth=1,label="template")
+    plt.plot(lams[c], resid[k,i,:], color="tab:green", linewidth=0.5, label="error")
+    plt.plot(lam_atmo, atmo, color="k", linewidth=0.1, label="atmo")
+    plt.plot(lams[c], data["chipcors"][k][c], color="r", linewidth=0.2,label="chipcors")
+plt.legend(loc=2, bbox_to_anchor=(1,1))
 
 # Set up a pymc3 model so we can optimize
 with pm.Model() as model:
