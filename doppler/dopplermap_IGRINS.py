@@ -22,7 +22,7 @@ datdir = f'{homedir}/dopplerimg/doppler/'
 nobs = 14
 nchips = 2
 firstchip = 4
-suffix = f'testfixedobs_order{firstchip}+{nchips}_nocors_'
+suffix = f'order{firstchip}+{nchips}_nocors_230109'
 
 filename = f'{homedir}/uoedrive/result/CIFIST/IGRINS_W1049B_K_lte015.0-5.0.pickle'
 with open(filename, 'rb') as f:
@@ -87,7 +87,7 @@ for i, jj in enumerate(range(firstchip, firstchip+nchips)): # EB: chip 4,5
     for kk in range(nobs): # EB: frame 0-13
         # EB: create delta-function line spectrum from wavelength grid, list of line locations, list of equivalent widths
         rv = ret["individual_fits"][kk][jj][0][2] # get specific rv fitted for this spectrum
-        deltaspec = ns.linespec(lineloc*(1.+6e-5), lineew, chiplams[:,jj].mean(0), verbose=False, cont=spline(chiplams[:,jj].mean(0)))
+        deltaspec = ns.linespec(lineloc*(1.+5e-5), lineew, chiplams[:,jj].mean(0), verbose=False, cont=spline(chiplams[:,jj].mean(0)))
         # lines shifted to rv
 
         # EB: DSA=Difference Spectral Analysis. Match given spectra to reference spectra
@@ -105,10 +105,9 @@ for i, jj in enumerate(range(firstchip, firstchip+nchips)): # EB: chip 4,5
 		#EB: only the kernels are used from here on   
 
 plt.figure(figsize=(15,4))
-for jj in range(nchips):
-    plt.plot(chiplams[:,jj].mean(0), obs1[kk,jj], color="tab:blue", linewidth=1, label="obs")
-    plt.plot(chiplams[:,jj].mean(0), chipmodnobroad[kk,jj], color="tab:orange", linewidth=1, label="nobroad")
-    plt.plot(chiplams[:,jj].mean(0), deltaspec/np.median(deltaspec), color="tab:green", linewidth=0.5, label="lines")
+plt.plot(chiplams[:,jj].mean(0), obs1[kk,jj], color="tab:blue", linewidth=1, label="obs")
+plt.plot(chiplams[:,jj].mean(0), chipmodnobroad[kk,jj], color="tab:orange", linewidth=1, label="nobroad")
+plt.plot(chiplams[:,jj].mean(0), deltaspec, color="tab:green", linewidth=0.5, label="lines")
 plt.legend(loc=2, bbox_to_anchor=(1, 1))
 
 # Compute LSD velocity grid:

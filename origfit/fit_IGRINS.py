@@ -760,7 +760,7 @@ def fit_binned(target, modelpath, band, telluricpath):
     fits.writeto(f'{resultdir}/IGRINS_{target}_{band}_binned_chipmodnobroad_{modelname[:12]}.fits', chipmodnobroad, overwrite=True)
     
     # save to pickle
-    saveout = dict(chipmods=chipmods, chiplams=chiplams, chipcors=chipcors, fobs0=fobs0, wfobs0=wfobs0, wobs=wls, modelfn=modelname, individual_fits=individual_fits, chipmodnobroad=chipmodnobroad)
+    saveout = dict(chipmods=chipmods, chiplams=chiplams, chipcors=chipcors, obs0=obs0, fobs0=fobs0, wfobs0=wfobs0, wobs=wls, modelfn=modelname, individual_fits=individual_fits, chipmodnobroad=chipmodnobroad)
     with open(f'{resultdir}/IGRINS_{target}_{band}_{modelname[:12]}.pickle', 'wb') as f:
         pickle.dump(saveout, f)
 
