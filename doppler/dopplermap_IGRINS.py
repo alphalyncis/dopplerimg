@@ -125,7 +125,7 @@ kerns = np.array([[np.interp(np.arange(nk), np.arange(nk) - systematic_rv_offset
 # Prepare the Doppler Imaging "response matrix"
 ######################################################################################
 
-modIP = 1. - np.concatenate((np.zeros(300), intrinsic_profile, np.zeros(300)))  # modIP is the line intensity I_lam in Vogt 1987
+modIP = 1. - np.concatenate((np.zeros(300), intrinsic_profile, np.zeros(300)))  # modIP is the line intensity I_lam in Vogt 1987 # XC: should be I_lam/I_c
 modDV = - np.arange(np.floor(-modIP.size/2.+.5), np.floor(modIP.size/2.+.5)) * dbeta * an.c / 1e3
 flineSpline2 = interpolate.UnivariateSpline(modDV[::-1], modIP[::-1], k=1., s=0.)
 
@@ -168,7 +168,7 @@ for kk, rot in enumerate(phase):
 	speccube = np.zeros((ncell, dv.size), dtype=np.float32) 
 	this_map = ELL_map.map(nlat=nlat, nlon=nlon, i=inc, deltaphi=-rot) #ELL_map.map returns a class object 
 	
-	this_doppler = 1. + vsini*this_map.visible_rvcorners.mean(1)/an.c/np.cos(inc)
+	this_doppler = 1. + vsini*this_map.visible_rvcorners.mean(1)/an.c/np.cos(inc) # XC: this_dopper (ncell,1) is the rv value corresponding to each cell
 	good = (this_map.projected_area>0) * np.isfinite(this_doppler)
 	for ii in good.nonzero()[0]:
 		speccube[ii,:] = flineSpline2(dv + (this_doppler[ii]-1)*an.c/1000.)  # shift modIP by rv of the zone due to rotation
